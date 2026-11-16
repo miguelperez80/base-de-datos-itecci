@@ -1,0 +1,28 @@
+{
+  "name": "itecci-backend",
+  "version": "1.0.0",
+  "description": "API REST de ITECCI (Express + Oracle). Capas: rutas -> controladores -> servicios -> repositorios -> paquetes PL/SQL",
+  "type": "module",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed:usuarios": "node scripts/seed-usuarios.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.4",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "oracledb": "^6.10.0",
+    "zod": "^3.25.76"
+  }
+}

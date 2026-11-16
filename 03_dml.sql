@@ -24,9 +24,9 @@ INSERT INTO aula (id, nombre, capacidad) VALUES (1, 'Aula 1', 30);
 INSERT INTO aula (id, nombre, capacidad) VALUES (2, 'Aula 2', 30);
 INSERT INTO aula (id, nombre, capacidad) VALUES (3, 'Aula 3', 30);
 
--- USUARIO (2 filas)
-INSERT INTO usuario (id, username, nombre, rol, password_hash, activo) VALUES (1, 'coordinador', 'Coordinador General', 'COORDINADOR', '172774f9188281b7dff16a4c95b19f9090c76e1ac1b2307f61682b3120525b74', 1);
-INSERT INTO usuario (id, username, nombre, rol, password_hash, activo) VALUES (2, 'secretaria', 'Secretaria', 'SECRETARIA', '74d273d36d3e3ad2b094abf6acfe2cbcc0f7ec18d939a8e617513a2290d9522f', 1);
+-- USUARIO (2 filas)  password_hash = bcrypt (costo 12). Claves de demostración: coordinador / Coord2026#  y  secretaria / Secre2026#
+INSERT INTO usuario (id, username, nombre, rol, password_hash, activo) VALUES (1, 'coordinador', 'Coordinador General', 'COORDINADOR', '$2b$12$ugEEkl1/tLxe4UK4GvOfeOribIZ016FaIV12Ahlmf/NxNvmZkiBlq', 1);
+INSERT INTO usuario (id, username, nombre, rol, password_hash, activo) VALUES (2, 'secretaria', 'Secretaria', 'SECRETARIA', '$2b$12$gSgPFGFdiLicQ6eJR.vZCej0wxNOAr7kK60hzqV2pso5KXqvysnji', 1);
 
 -- MEDIO_PAGO (3 filas)
 INSERT INTO medio_pago (id, nombre) VALUES (1, 'Efectivo');
