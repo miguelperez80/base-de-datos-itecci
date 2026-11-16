@@ -51,7 +51,7 @@ export default function Login() {
 
           {!['localhost', '127.0.0.1'].includes(window.location.hostname) && (
             <div className="alerta info" style={{ marginTop: 16 }}>
-              <span>Esta es la interfaz publicada. Los datos están en Oracle, en el equipo del proyecto: para ingresar, el backend debe estar encendido allí (<code>iniciar.bat</code>).</span>
+              <span>Esta es la interfaz publicada. Los datos están en Oracle, en el equipo del proyecto: para ingresar, el backend debe estar encendido allí (<code>iniciar.bat</code>). Si el navegador pregunta si este sitio puede acceder a la red local o a otras aplicaciones de este equipo, elija <strong>Permitir</strong>.</span>
             </div>
           )}
 
