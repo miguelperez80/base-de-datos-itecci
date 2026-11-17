@@ -43,7 +43,7 @@ La base se reconstruye completa con **dos scripts**, como pide la guía:
 | `DDL.sql` | Toda la definición: 22 tablas con sus restricciones, índices, secuencias, vistas, procedimientos, paquetes y triggers, más los permisos de los roles. Empieza borrando lo que exista, así que se puede volver a ejecutar |
 | `DATOS.sql` | Los `INSERT` de los datos de prueba (≈10.500 registros en 21 tablas) |
 
-Antes, una sola vez y como SYSTEM, `01_usuarios.sql` crea el usuario `itecci` y los roles. Luego, como `itecci`, se ejecuta `DDL.sql` y después `DATOS.sql` (en SQL Developer con F5), o los dos de una vez con `instalar.sql`:
+Antes, una sola vez y como SYSTEM, `USUARIOS.sql` crea el usuario `itecci` y los roles. Luego, como `itecci`, se ejecuta `DDL.sql` y después `DATOS.sql` (en SQL Developer con F5), o los dos de una vez con `instalar.sql`:
 
 ```
 $env:NLS_LANG = 'AMERICAN_AMERICA.AL32UTF8'
@@ -51,8 +51,6 @@ sqlplus itecci/"Itecci2026#"@localhost:1521/freepdb1 @instalar.sql
 ```
 
 `NLS_LANG` en UTF-8 es necesario para que las tildes y eñes de los scripts se carguen bien.
-
-`DDL.sql` y `DATOS.sql` se generan a partir de los scripts numerados (que se conservan separados como evidencia de cada avance) con `python tools/generar_ddl_datos.py`. Si se cambia un script numerado, hay que volver a generarlos.
 
 ### GitHub Pages
 
@@ -70,6 +68,7 @@ Navegador (React, :5173) ──HTTP/JSON + cookie──> API Express (:3000) ─
 
 ```
 ├── *.sql                    Base de datos (ver tabla abajo)
+├── docs/                    Documento del proyecto, modelos conceptual y físico, guía de sustentación
 ├── backend/                 API REST · Node + Express
 │   └── src/
 │       ├── config/          Variables de entorno validadas y pool de conexiones
@@ -97,23 +96,16 @@ Navegador (React, :5173) ──HTTP/JSON + cookie──> API Express (:3000) ─
 
 | Script | Usuario | Contenido |
 |---|---|---|
-| **`DDL.sql`** | ITECCI | **Entrega: definición completa de la base** (reúne 00, 02, 04, 05, 07 y 11) |
-| **`DATOS.sql`** | ITECCI | **Entrega: datos de prueba** (los `INSERT` de 03) |
-| `00_limpiar.sql` | ITECCI | (Opcional) borra los objetos del proyecto para repetir desde cero |
-| `01_usuarios.sql` | SYSTEM | Usuario ITECCI y roles `rol_coordinador` y `rol_secretaria` (una sola vez) |
-| `02_ddl.sql` | ITECCI | 21 tablas, restricciones, índices y secuencias |
-| `03_dml.sql` | ITECCI | Datos de prueba (≈10.500 registros) |
-| `04_plsql_vistas.sql` | ITECCI | `V_ESTADO_CREDITO`, `V_BOLETIN`, `SP_MATRICULAR`, `SP_REGISTRAR_PAGO`, `SP_GENERAR_PLAN_PAGOS` |
-| `05_roles_permisos.sql` | ITECCI | Permisos por rol |
-| `06_consultas.sql` | ITECCI | Consultas SQL de evidencia (punto 1) |
-| `07_plsql_objetos.sql` | ITECCI | **Avance PL/SQL:** tabla AUDITORIA, secuencias, índices, vista, 6 paquetes y 7 triggers |
-| `08_reportes.sql` | ITECCI | **Avance PL/SQL:** 7 bloques anónimos de reporte |
-| `09_pruebas.sql` | ITECCI | **Avance PL/SQL:** pruebas de excepciones, triggers y CRUD (terminan en ROLLBACK) |
-| `10_diccionario.sql` | ITECCI | **Avance PL/SQL:** consultas al diccionario de datos |
-| `11_api_paquetes.sql` | ITECCI | **Aplicación:** 11 paquetes `PKG_API_*` que consume la API y 3 triggers complementarios |
-| `instalar.sql` | ITECCI | Ejecuta `DDL.sql` y `DATOS.sql` |
+| `USUARIOS.sql` | SYSTEM | Usuario `itecci` y roles `rol_coordinador` y `rol_secretaria` (una sola vez) |
+| **`DDL.sql`** | ITECCI | **Definición completa:** 22 tablas, restricciones, índices, secuencias, vistas, procedimientos, paquetes (`PKG_*` del avance y `PKG_API_*` de la aplicación), 10 triggers y permisos |
+| **`DATOS.sql`** | ITECCI | **Datos de prueba:** ≈10.500 `INSERT` |
+| `CONSULTAS.sql` | ITECCI | Consultas SQL de evidencia (punto 1): filtros, JOINs, ordenamientos, agrupación, subconsultas |
+| `REPORTES.sql` | ITECCI | **Avance PL/SQL:** 7 bloques anónimos de reporte |
+| `PRUEBAS.sql` | ITECCI | **Avance PL/SQL:** pruebas de excepciones, triggers y CRUD (terminan en ROLLBACK) |
+| `DICCIONARIO.sql` | ITECCI | **Avance PL/SQL:** consultas al diccionario de datos |
+| `instalar.sql` | ITECCI | Ejecuta `DDL.sql` y `DATOS.sql` desde SQL*Plus |
 
-Antes de 08 y 09 active la salida: `SET SERVEROUTPUT ON` (ya viene en los scripts; en SQL Developer, *Ver → Salida de DBMS*).
+Antes de `REPORTES.sql` y `PRUEBAS.sql` active la salida: `SET SERVEROUTPUT ON` (ya viene en los scripts; en SQL Developer, *Ver → Salida de DBMS*).
 
 **Cómo conviven el avance y la aplicación.** Los paquetes del avance (`PKG_ESTUDIANTE`, `PKG_DOCENTE`, `PKG_GRUPO`, `PKG_CALIFICACION`, `PKG_CERTIFICACION`, `PKG_UTIL`) se conservan tal cual: imprimen por `DBMS_OUTPUT` y se prueban desde SQL. La API necesita cursores paginados y parámetros de salida, así que usa paquetes aparte con prefijo `PKG_API_`. Las reglas no se duplican: todo lo que la aplicación escribe pasa por los triggers del avance, por `SP_MATRICULAR` y `SP_REGISTRAR_PAGO`, y el número de recibo sale de `PKG_UTIL.fn_siguiente_recibo`.
 
@@ -121,15 +113,15 @@ Antes de 08 y 09 active la salida: `SET SERVEROUTPUT ON` (ya viene en los script
 
 | Req. | Requisito | Dónde está |
 |---|---|---|
-| a | Bloques anónimos de reporte (mín. 5) | `08_reportes.sql`: R1 cartera en mora, R2 boletín, R3 asistencia, R4 recaudo mensual, R5 candidatos a diploma, R6 honorarios docentes, R7 facturas pendientes |
+| a | Bloques anónimos de reporte (mín. 5) | `REPORTES.sql`: R1 cartera en mora, R2 boletín, R3 asistencia, R4 recaudo mensual, R5 candidatos a diploma, R6 honorarios docentes, R7 facturas pendientes |
 | b | Paquetes CRUD (mín. 4) | `PKG_ESTUDIANTE`, `PKG_DOCENTE`, `PKG_GRUPO`, `PKG_CALIFICACION` (+ `PKG_CERTIFICACION`, `PKG_UTIL`) |
 | c | IF, CASE, WHILE, FOR, LOOP | IF/ELSIF en todos; CASE en R1, R2, R6, T1, `cambiar_estado`; WHILE en R3 y R4; FOR numérico en R3 y `pkg_docente.consultar`; LOOP/EXIT WHEN en R4 y R5 |
 | d | Excepciones (mín. 5) | NO_DATA_FOUND, DUP_VAL_ON_INDEX, TOO_MANY_ROWS, ZERO_DIVIDE, OTHERS, PRAGMA EXCEPTION_INIT (-2290, -2291, -2292), excepciones de usuario, RAISE_APPLICATION_ERROR (-20100…-20251) |
 | e | Cursores (mín. 4, uno con parámetros) | `c_grupos(p_periodo)` y `c_morosos(p_grupo)` en R1; `c_matriculas(p_estudiante)`; `c_horario(p_grupo)`; explícito OPEN/FETCH/CLOSE en R5; REF CURSOR en `pkg_estudiante.buscar` |
 | f | RECORD, TABLE, BULK COLLECT | RECORD `t_contrato`, `t_asistencia`, `t_mes`; TABLE INDEX BY PLS_INTEGER y BY VARCHAR2; BULK COLLECT en R3 y `pkg_docente.contratos`; VARRAY `t_dias`; `%ROWTYPE` |
-| g | Triggers de reglas de negocio (mín. 4) | 7 triggers en `07_plsql_objetos.sql` (tabla siguiente) y 3 complementarios en `11_api_paquetes.sql` |
+| g | Triggers de reglas de negocio (mín. 4) | 10 triggers en `DDL.sql`: 7 del avance (sección 4) y 3 complementarios (sección 5) |
 | h | Vista | `V_ASISTENCIA_MATRICULA` |
-| i | Diccionario de datos (tablas y procedimientos) | `10_diccionario.sql` DD1–DD3 (tablas), DD4–DD6 (procedimientos y paquetes), DD7–DD11; en la aplicación, la pantalla "Diccionario de datos" |
+| i | Diccionario de datos (tablas y procedimientos) | `DICCIONARIO.sql` DD1–DD3 (tablas), DD4–DD6 (procedimientos y paquetes), DD7–DD11; en la aplicación, la pantalla "Diccionario de datos" |
 | j | Índices y secuencias justificados | `IX_CALIF_COMPETENCIA`, `IX_PAGO_FACTURA`, `IX_EST_APELLIDO_UPPER` (basado en función), `IX_AUDITORIA_REG`; `SEQ_RECIBO`, `SEQ_FACTURA` (NOCACHE), `SEQ_AUDITORIA` |
 | k | Regla de formato de datos | `PKG_UTIL`: moneda `$1.234.567`, fecha `DD/MM/AAAA` y larga, nota `0.0`; `TRG_ESTUDIANTE_FORMATO` (cédula, celular, email, nombres); `TRG_PAGO_FACTURA` (recibo numérico, factura `FE-000000`) |
 
@@ -152,7 +144,7 @@ Antes de 08 y 09 active la salida: `SET SERVEROUTPUT ON` (ya viene en los script
 
 - `docs/GUIA_SUSTENTACION.md`: guía para la sustentación (resumen, guion de demostración y preguntas probables).
 - `docs/Base de datos Oracle para ITECCI - Documento.pdf`: documento del proyecto (requisitos, reglas de negocio, modelos).
-- `modelo_conceptual.png` y `modelo_fisico.png`.
+- `docs/modelo_conceptual.png` y `docs/modelo_fisico.png`.
 
 ## Cómo se cumple el punto 3 de la guía
 
@@ -188,5 +180,5 @@ Antes de 08 y 09 active la salida: `SET SERVEROUTPUT ON` (ya viene en los script
 
 - La API se conecta con el usuario dueño del esquema (`itecci`). En producción convendría un usuario de servicio con solo `EXECUTE` sobre los paquetes.
 - La cookie de sesión no lleva `Secure` en desarrollo porque `localhost` no usa HTTPS; se activa sola con `NODE_ENV=production`.
-- No hay pantallas para calificaciones, asistencia ni diplomas: se manejan desde SQL con `PKG_CALIFICACION`, `PKG_CERTIFICACION` y los reportes de `08_reportes.sql`.
+- No hay pantallas para calificaciones, asistencia ni diplomas: se manejan desde SQL con `PKG_CALIFICACION`, `PKG_CERTIFICACION` y los reportes de `REPORTES.sql`.
 - Al anular un recibo desde la aplicación se anula también su factura en el mismo paso, que es lo que exige RN-18.

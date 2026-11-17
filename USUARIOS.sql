@@ -1,5 +1,5 @@
 -- =====================================================================
--- 01_usuarios.sql : usuario de trabajo y roles. Ejecutar como SYSTEM (o SYS como SYSDBA).
+-- USUARIOS.sql : usuario de trabajo y roles (se ejecuta una sola vez, antes de DDL.sql). Ejecutar como SYSTEM (o SYS como SYSDBA).
 -- Oracle 11g:  CONNECT system/<clave>
 -- Oracle 18c:  conectarse al PDB (p. ej. ALTER SESSION SET CONTAINER = XEPDB1;) antes de crear el usuario.
 --              En un CDB raíz el usuario común debe llamarse C##ITECCI.

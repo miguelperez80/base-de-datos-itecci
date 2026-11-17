@@ -1,7 +1,7 @@
 -- =====================================================================
 -- ITECCI - Avance PL/SQL
--- 08_reportes.sql : (a) bloques anónimos que funcionan como reportes del negocio
--- Ejecutar como ITECCI después de 07_plsql_objetos.sql. Cada bloque termina en "/".
+-- REPORTES.sql : (a) bloques anónimos que funcionan como reportes del negocio
+-- Ejecutar como ITECCI después de DDL.sql y DATOS.sql. Cada bloque termina en "/".
 --
 --   R1  Cartera en mora por grupo de un periodo     cursores con parámetros anidados, IF, CASE, excepción propia
 --   R2  Boletín de notas de un estudiante           SELECT INTO + NO_DATA_FOUND/TOO_MANY_ROWS, cursor FOR, CASE

@@ -1,6 +1,6 @@
 -- =====================================================================
 -- ITECCI - Avance PL/SQL
--- 10_diccionario.sql : (i) revisión del diccionario de datos de Oracle (vistas USER_*)
+-- DICCIONARIO.sql : (i) revisión del diccionario de datos de Oracle (vistas USER_*)
 -- Ejecutar como ITECCI. Se excluyen las tablas internas de la extensión de VS Code (DBTOOLS$...).
 -- =====================================================================
 

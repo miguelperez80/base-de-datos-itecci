@@ -15,7 +15,6 @@
 -- Usuarios de la aplicación (contraseña con hash bcrypt):
 --   coordinador / Coord2026#    secretaria / Secre2026#
 --
--- Generado con tools/generar_ddl_datos.py a partir de 03_dml.sql.
 -- =====================================================================
 SET DEFINE OFF
 SET FEEDBACK OFF

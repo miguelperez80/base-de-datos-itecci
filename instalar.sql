@@ -1,6 +1,6 @@
 -- =====================================================================
 -- instalar.sql : reconstruye TODO el esquema ITECCI con los dos scripts de entrega (borra y vuelve a crear).
--- Requisito: el usuario ITECCI y los roles ya existen (01_usuarios.sql, una sola vez como SYSTEM).
+-- Requisito: el usuario ITECCI y los roles ya existen (USUARIOS.sql, una sola vez como SYSTEM).
 --
 -- Desde la carpeta del proyecto, con la consola en UTF-8 para conservar tildes y eñes:
 --   PowerShell:  $env:NLS_LANG = 'AMERICAN_AMERICA.AL32UTF8'

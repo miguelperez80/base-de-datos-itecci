@@ -1,6 +1,6 @@
 -- =====================================================================
--- 06_consultas.sql : consultas SQL de evidencia (Oracle 11g/18c)
--- Ejecutar como ITECCI.  Requiere 02_ddl.sql, 03_dml.sql y 04_plsql_vistas.sql.
+-- CONSULTAS.sql : consultas SQL de evidencia (Oracle 11g/18c)
+-- Ejecutar como ITECCI.  Requiere DDL.sql y DATOS.sql.
 -- =====================================================================
 SET LINESIZE 200 PAGESIZE 60
 SET DEFINE OFF

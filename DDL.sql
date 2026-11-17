@@ -11,12 +11,11 @@
 --   6. Permisos de los roles
 --
 -- Orden de reconstrucción:
---   (una sola vez, como SYSTEM)  01_usuarios.sql   crea el usuario ITECCI y los roles
+--   (una sola vez, como SYSTEM)  USUARIOS.sql      crea el usuario ITECCI y los roles
 --   (como ITECCI)                DDL.sql           este archivo
 --   (como ITECCI)                DATOS.sql         datos de prueba
 --
--- Generado con tools/generar_ddl_datos.py a partir de 02, 04, 05, 07 y 11 (que se conservan
--- separados como evidencia de cada avance). Compatible con Oracle 12.2 o superior.
+-- Compatible con Oracle 12.2 o superior (la paginación de los paquetes PKG_API_* usa OFFSET/FETCH).
 -- =====================================================================
 SET DEFINE OFF
 SET SERVEROUTPUT ON SIZE UNLIMITED
@@ -64,7 +63,7 @@ END;
 /
 
 -- #####################################################################
--- 2. TABLAS, RESTRICCIONES, ÍNDICES Y SECUENCIAS  (02_ddl.sql)
+-- 2. TABLAS, RESTRICCIONES, ÍNDICES Y SECUENCIAS
 -- #####################################################################
 CREATE TABLE tecnico (
     id      NUMBER(4)     NOT NULL,
@@ -452,7 +451,7 @@ CREATE SEQUENCE seq_calificacion       START WITH 10000;
 CREATE SEQUENCE seq_diploma            START WITH 1000;
 
 -- #####################################################################
--- 3. VISTAS Y PROCEDIMIENTOS ALMACENADOS  (04_plsql_vistas.sql)
+-- 3. VISTAS Y PROCEDIMIENTOS ALMACENADOS
 -- #####################################################################
 CREATE OR REPLACE VIEW v_estado_credito AS
 SELECT m.id AS matricula_id, m.estudiante_id, m.grupo_id,
@@ -608,7 +607,7 @@ END sp_registrar_pago;
 -- ROLLBACK;
 
 -- #####################################################################
--- 4. AVANCE PL/SQL: AUDITORÍA, ÍNDICES, SECUENCIAS, VISTA, PAQUETES Y TRIGGERS  (07_plsql_objetos.sql)
+-- 4. AVANCE PL/SQL: AUDITORÍA, ÍNDICES, SECUENCIAS, VISTA, PAQUETES Y TRIGGERS
 -- #####################################################################
 -- =====================================================================
 -- 1. (j) TABLA DE AUDITORÍA, SECUENCIAS E ÍNDICES
@@ -1724,7 +1723,7 @@ END pkg_certificacion;
 /
 
 -- #####################################################################
--- 5. PAQUETES DE LA APLICACIÓN WEB Y TRIGGERS COMPLEMENTARIOS  (11_api_paquetes.sql)
+-- 5. PAQUETES DE LA APLICACIÓN WEB Y TRIGGERS COMPLEMENTARIOS
 -- #####################################################################
 CREATE OR REPLACE PACKAGE pkg_api_util AS
     c_formato_fecha CONSTANT VARCHAR2(10) := 'YYYY-MM-DD';
@@ -2124,7 +2123,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_api_grupo AS
 
     -- Un aula no puede tener dos grupos el mismo día en el mismo periodo (la jornada es única)
     -- El docente necesita contrato en el periodo (RN-12) y no puede dictar dos grupos el mismo día.
-    -- Son las mismas reglas de PKG_GRUPO.crear (07_plsql_objetos.sql).
+    -- Son las mismas reglas de PKG_GRUPO.crear (sección 4).
     PROCEDURE validar_horario (p_id IN NUMBER, p_periodo_id IN NUMBER, p_aula_id IN NUMBER, p_docente_id IN NUMBER,
                                p_dia1 IN NUMBER, p_dia2 IN NUMBER) IS
         v_otro grupo.codigo%TYPE;
@@ -2399,7 +2398,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_api_pago AS
             WHEN NO_DATA_FOUND THEN
                 RAISE_APPLICATION_ERROR(-20404, 'La matrícula no existe');
         END;
-        p_recibo := pkg_util.fn_siguiente_recibo;   -- consecutivo sin saltos (SEQ_RECIBO, 07_plsql_objetos.sql)
+        p_recibo := pkg_util.fn_siguiente_recibo;   -- consecutivo sin saltos (SEQ_RECIBO, sección 4)
         sp_registrar_pago(p_matricula_id, p_recibo, p_valor, p_medio_pago_id, p_usuario_id);
         SELECT id INTO p_id FROM pago WHERE numero_recibo = p_recibo;
         IF p_referencia IS NOT NULL THEN
@@ -2626,7 +2625,7 @@ END pkg_api_diccionario;
 /
 
 -- =====================================================================
--- Triggers complementarios (no repiten los 7 de 07_plsql_objetos.sql).  Códigos -20020 a -20027
+-- Triggers complementarios (no repiten los 7 de la sección 4).  Códigos -20020 a -20027
 -- =====================================================================
 
 -- Formato de datos del docente (el del estudiante lo cubre TRG_ESTUDIANTE_FORMATO)
@@ -2690,8 +2689,8 @@ END trg_matricula_estado;
 -- #####################################################################
 -- 6. PERMISOS DE LOS ROLES
 -- #####################################################################
--- Permisos de los roles (05_roles_permisos.sql y sección 6 de 07_plsql_objetos.sql).
--- Los roles los crea 01_usuarios.sql (como SYSTEM). Si no existen, se avisa y el script continúa.
+-- Permisos de los roles sobre tablas, vistas, secuencias, procedimientos y paquetes.
+-- Los roles los crea USUARIOS.sql (como SYSTEM). Si no existen, se avisa y el script continúa.
 DECLARE
   TYPE t_lista IS TABLE OF VARCHAR2(200);
   v_fijos t_lista := t_lista(
@@ -2749,7 +2748,7 @@ BEGIN
   IF v_fallos = 0 THEN
     DBMS_OUTPUT.PUT_LINE('Permisos de los roles aplicados.');
   ELSE
-    DBMS_OUTPUT.PUT_LINE(v_fallos || ' permisos no se aplicaron: ejecute 01_usuarios.sql como SYSTEM y luego vuelva a correr DDL.sql.');
+    DBMS_OUTPUT.PUT_LINE(v_fallos || ' permisos no se aplicaron: ejecute USUARIOS.sql como SYSTEM y luego vuelva a correr DDL.sql.');
   END IF;
 END;
 /
