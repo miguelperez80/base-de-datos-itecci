@@ -36,7 +36,14 @@ Son claves de demostración. Para cambiarlas: `npm run seed:usuarios -- <usuario
 
 ### Reconstruir la base de datos
 
-`01_usuarios.sql` se ejecuta una sola vez como SYSTEM para crear el usuario `itecci`. Todo lo demás se reconstruye con un solo script:
+La base se reconstruye completa con **dos scripts**, como pide la guía:
+
+| Script | Contenido |
+|---|---|
+| `DDL.sql` | Toda la definición: 22 tablas con sus restricciones, índices, secuencias, vistas, procedimientos, paquetes y triggers, más los permisos de los roles. Empieza borrando lo que exista, así que se puede volver a ejecutar |
+| `DATOS.sql` | Los `INSERT` de los datos de prueba (≈10.500 registros en 21 tablas) |
+
+Antes, una sola vez y como SYSTEM, `01_usuarios.sql` crea el usuario `itecci` y los roles. Luego, como `itecci`, se ejecuta `DDL.sql` y después `DATOS.sql` (en SQL Developer con F5), o los dos de una vez con `instalar.sql`:
 
 ```
 $env:NLS_LANG = 'AMERICAN_AMERICA.AL32UTF8'
@@ -44,6 +51,8 @@ sqlplus itecci/"Itecci2026#"@localhost:1521/freepdb1 @instalar.sql
 ```
 
 `NLS_LANG` en UTF-8 es necesario para que las tildes y eñes de los scripts se carguen bien.
+
+`DDL.sql` y `DATOS.sql` se generan a partir de los scripts numerados (que se conservan separados como evidencia de cada avance) con `python tools/generar_ddl_datos.py`. Si se cambia un script numerado, hay que volver a generarlos.
 
 ### GitHub Pages
 
@@ -88,6 +97,8 @@ Navegador (React, :5173) ──HTTP/JSON + cookie──> API Express (:3000) ─
 
 | Script | Usuario | Contenido |
 |---|---|---|
+| **`DDL.sql`** | ITECCI | **Entrega: definición completa de la base** (reúne 00, 02, 04, 05, 07 y 11) |
+| **`DATOS.sql`** | ITECCI | **Entrega: datos de prueba** (los `INSERT` de 03) |
 | `00_limpiar.sql` | ITECCI | (Opcional) borra los objetos del proyecto para repetir desde cero |
 | `01_usuarios.sql` | SYSTEM | Usuario ITECCI y roles `rol_coordinador` y `rol_secretaria` (una sola vez) |
 | `02_ddl.sql` | ITECCI | 21 tablas, restricciones, índices y secuencias |
@@ -100,7 +111,7 @@ Navegador (React, :5173) ──HTTP/JSON + cookie──> API Express (:3000) ─
 | `09_pruebas.sql` | ITECCI | **Avance PL/SQL:** pruebas de excepciones, triggers y CRUD (terminan en ROLLBACK) |
 | `10_diccionario.sql` | ITECCI | **Avance PL/SQL:** consultas al diccionario de datos |
 | `11_api_paquetes.sql` | ITECCI | **Aplicación:** 11 paquetes `PKG_API_*` que consume la API y 3 triggers complementarios |
-| `instalar.sql` | ITECCI | Ejecuta 00, 02, 03, 04, 05, 07 y 11 en orden |
+| `instalar.sql` | ITECCI | Ejecuta `DDL.sql` y `DATOS.sql` |
 
 Antes de 08 y 09 active la salida: `SET SERVEROUTPUT ON` (ya viene en los scripts; en SQL Developer, *Ver → Salida de DBMS*).
 
