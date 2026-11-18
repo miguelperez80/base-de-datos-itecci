@@ -7,7 +7,7 @@
 --   3. Vistas y procedimientos almacenados (matrícula, pagos, plan de pagos)
 --   4. Avance PL/SQL: tabla AUDITORIA, índices y secuencias justificados, vista,
 --      paquetes PKG_* y 7 triggers de reglas de negocio
---   5. Paquetes PKG_API_* de la aplicación web y 3 triggers complementarios
+--   5. Paquetes PKG_API_* de la aplicación web (12) y 3 triggers complementarios
 --   6. Permisos de los roles
 --
 -- Orden de reconstrucción:
@@ -1808,6 +1808,10 @@ CREATE OR REPLACE PACKAGE BODY pkg_api_catalogo AS
                 OPEN v_cur FOR SELECT id, nombre FROM tecnico WHERE activo = 1 ORDER BY nombre;
             WHEN 'docentes' THEN
                 OPEN v_cur FOR SELECT id, apellidos || ' ' || nombres AS nombre FROM docente WHERE activo = 1 ORDER BY apellidos, nombres;
+            WHEN 'docentes_todos' THEN
+                OPEN v_cur FOR
+                    SELECT id, apellidos || ' ' || nombres || CASE WHEN activo = 0 THEN ' (inactivo)' END AS nombre
+                      FROM docente ORDER BY apellidos, nombres;
             WHEN 'grupos_abiertos' THEN
                 OPEN v_cur FOR
                     SELECT g.id, g.codigo || ' · ' || t.nombre || ' (semestre ' || g.semestre || ')' AS nombre
@@ -2039,6 +2043,122 @@ END pkg_api_docente;
 /
 
 -- =====================================================================
+-- pkg_api_contrato : contratos por hora cátedra (RN-12: un docente solo dicta grupos en un periodo
+-- en el que tiene contrato). Un contrato por docente y periodo (UQ_CONTRATO).
+-- =====================================================================
+CREATE OR REPLACE PACKAGE pkg_api_contrato AS
+    PROCEDURE insertar   (p_docente_id IN NUMBER, p_periodo_id IN NUMBER, p_horas_catedra IN NUMBER,
+                          p_valor_hora IN NUMBER, p_id OUT NUMBER);
+    PROCEDURE actualizar (p_id IN NUMBER, p_horas_catedra IN NUMBER, p_valor_hora IN NUMBER);
+    PROCEDURE eliminar   (p_id IN NUMBER);
+    FUNCTION  obtener    (p_id IN NUMBER) RETURN SYS_REFCURSOR;
+    PROCEDURE listar     (p_busqueda IN VARCHAR2, p_offset IN NUMBER, p_limit IN NUMBER,
+                          p_total OUT NUMBER, p_cursor OUT SYS_REFCURSOR);
+END pkg_api_contrato;
+/
+CREATE OR REPLACE PACKAGE BODY pkg_api_contrato AS
+    PROCEDURE insertar (p_docente_id IN NUMBER, p_periodo_id IN NUMBER, p_horas_catedra IN NUMBER,
+                        p_valor_hora IN NUMBER, p_id OUT NUMBER) IS
+        v_activo  docente.activo%TYPE;
+        v_periodo periodo.codigo%TYPE;
+        v_n       NUMBER;
+    BEGIN
+        BEGIN
+            SELECT activo INTO v_activo FROM docente WHERE id = p_docente_id;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE_APPLICATION_ERROR(-20404, 'El docente no existe');
+        END;
+        IF v_activo = 0 THEN
+            RAISE_APPLICATION_ERROR(-20044, 'No se puede contratar a un docente inactivo');
+        END IF;
+
+        BEGIN
+            SELECT codigo INTO v_periodo FROM periodo WHERE id = p_periodo_id;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE_APPLICATION_ERROR(-20404, 'El periodo no existe');
+        END;
+
+        SELECT COUNT(*) INTO v_n FROM contrato_docente WHERE docente_id = p_docente_id AND periodo_id = p_periodo_id;
+        IF v_n > 0 THEN
+            RAISE_APPLICATION_ERROR(-20045, 'El docente ya tiene contrato en el periodo ' || v_periodo || '; edite ese contrato');
+        END IF;
+
+        SELECT seq_contrato_docente.NEXTVAL INTO p_id FROM dual;
+        INSERT INTO contrato_docente (id, docente_id, periodo_id, horas_catedra, valor_hora)
+        VALUES (p_id, p_docente_id, p_periodo_id, p_horas_catedra, p_valor_hora);
+    END insertar;
+
+    PROCEDURE actualizar (p_id IN NUMBER, p_horas_catedra IN NUMBER, p_valor_hora IN NUMBER) IS
+    BEGIN
+        UPDATE contrato_docente SET horas_catedra = p_horas_catedra, valor_hora = p_valor_hora WHERE id = p_id;
+        IF SQL%ROWCOUNT = 0 THEN
+            RAISE_APPLICATION_ERROR(-20404, 'El contrato no existe');
+        END IF;
+    END actualizar;
+
+    -- No se elimina el contrato de un docente que tiene grupos en ese periodo: los grupos quedarían sin respaldo (RN-12)
+    PROCEDURE eliminar (p_id IN NUMBER) IS
+        v_docente contrato_docente.docente_id%TYPE;
+        v_periodo contrato_docente.periodo_id%TYPE;
+        v_grupos  NUMBER;
+    BEGIN
+        BEGIN
+            SELECT docente_id, periodo_id INTO v_docente, v_periodo FROM contrato_docente WHERE id = p_id;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE_APPLICATION_ERROR(-20404, 'El contrato no existe');
+        END;
+        SELECT COUNT(*) INTO v_grupos FROM grupo WHERE docente_id = v_docente AND periodo_id = v_periodo;
+        IF v_grupos > 0 THEN
+            RAISE_APPLICATION_ERROR(-20046, 'No se puede eliminar: el docente tiene ' || v_grupos
+                || ' grupo(s) en ese periodo. Reasigne los grupos a otro docente primero.');
+        END IF;
+        DELETE FROM contrato_docente WHERE id = p_id;
+    END eliminar;
+
+    FUNCTION obtener (p_id IN NUMBER) RETURN SYS_REFCURSOR IS
+        v_cur SYS_REFCURSOR;
+    BEGIN
+        OPEN v_cur FOR
+            SELECT id, docente_id, periodo_id, horas_catedra, valor_hora
+              FROM contrato_docente WHERE id = p_id;
+        RETURN v_cur;
+    END obtener;
+
+    -- Horas dictadas = sesiones registradas de sus grupos en el periodo x 2,5 h (6:30 p. m. a 9:00 p. m.)
+    PROCEDURE listar (p_busqueda IN VARCHAR2, p_offset IN NUMBER, p_limit IN NUMBER,
+                      p_total OUT NUMBER, p_cursor OUT SYS_REFCURSOR) IS
+        v_b VARCHAR2(200) := UPPER(TRIM(p_busqueda));
+    BEGIN
+        SELECT COUNT(*) INTO p_total
+          FROM contrato_docente c
+          JOIN docente d ON d.id = c.docente_id
+          JOIN periodo p ON p.id = c.periodo_id
+         WHERE v_b IS NULL OR UPPER(d.apellidos || ' ' || d.nombres) LIKE '%' || v_b || '%'
+            OR UPPER(d.nombres || ' ' || d.apellidos) LIKE '%' || v_b || '%'
+            OR d.cedula LIKE v_b || '%' OR p.codigo LIKE v_b || '%';
+        OPEN p_cursor FOR
+            SELECT c.id, d.cedula, d.apellidos || ' ' || d.nombres AS docente, d.activo, p.codigo AS periodo,
+                   c.horas_catedra, c.valor_hora, c.horas_catedra * c.valor_hora AS total,
+                   (SELECT COUNT(*) FROM grupo g
+                     WHERE g.docente_id = c.docente_id AND g.periodo_id = c.periodo_id AND g.estado <> 'Cancelado') AS grupos,
+                   (SELECT COUNT(*) * 2.5 FROM sesion_clase s JOIN grupo g ON g.id = s.grupo_id
+                     WHERE g.docente_id = c.docente_id AND g.periodo_id = c.periodo_id) AS horas_dictadas
+              FROM contrato_docente c
+              JOIN docente d ON d.id = c.docente_id
+              JOIN periodo p ON p.id = c.periodo_id
+             WHERE v_b IS NULL OR UPPER(d.apellidos || ' ' || d.nombres) LIKE '%' || v_b || '%'
+                OR UPPER(d.nombres || ' ' || d.apellidos) LIKE '%' || v_b || '%'
+                OR d.cedula LIKE v_b || '%' OR p.codigo LIKE v_b || '%'
+             ORDER BY p.fecha_inicio DESC, d.apellidos, d.nombres
+            OFFSET NVL(p_offset, 0) ROWS FETCH NEXT NVL(p_limit, 20) ROWS ONLY;
+    END listar;
+END pkg_api_contrato;
+/
+
+-- =====================================================================
 -- pkg_api_tecnico
 -- =====================================================================
 CREATE OR REPLACE PACKAGE pkg_api_tecnico AS
@@ -2134,7 +2254,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_api_grupo AS
         END IF;
         SELECT COUNT(*) INTO v_n FROM contrato_docente WHERE docente_id = p_docente_id AND periodo_id = p_periodo_id;
         IF v_n = 0 THEN
-            RAISE_APPLICATION_ERROR(-20042, 'El docente no tiene contrato por hora cátedra en ese periodo');
+            RAISE_APPLICATION_ERROR(-20042, 'El docente no tiene contrato por hora cátedra en ese periodo. Regístrelo en Contratos docentes.');
         END IF;
         SELECT MIN(g.codigo) INTO v_otro
           FROM grupo g JOIN horario_grupo h ON h.grupo_id = g.id

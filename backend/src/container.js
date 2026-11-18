@@ -1,6 +1,8 @@
 import { env } from './config/env.js';
 import { db } from './config/db.js';
-import { EstudianteRepository, DocenteRepository, TecnicoRepository, GrupoRepository } from './repositories/entidades.js';
+import {
+  EstudianteRepository, DocenteRepository, ContratoRepository, TecnicoRepository, GrupoRepository,
+} from './repositories/entidades.js';
 import {
   UsuarioRepository, CatalogoRepository, MatriculaRepository, PagoRepository, ReporteRepository, DiccionarioRepository,
 } from './repositories/procesos.js';
@@ -26,6 +28,7 @@ export function crearContenedor(conexion = db) {
     catalogos: ctl.catalogoController(new CatalogoRepository(conexion)),
     estudiantes: ctl.crudController(new CrudService(new EstudianteRepository(conexion), 'El estudiante')),
     docentes: ctl.crudController(new CrudService(new DocenteRepository(conexion), 'El docente')),
+    contratos: ctl.crudController(new CrudService(new ContratoRepository(conexion), 'El contrato')),
     tecnicos: ctl.crudController(new CrudService(new TecnicoRepository(conexion), 'El programa técnico')),
     grupos: ctl.crudController(new CrudService(new GrupoRepository(conexion), 'El grupo')),
     matriculas: ctl.matriculaController(new MatriculaService(new MatriculaRepository(conexion))),

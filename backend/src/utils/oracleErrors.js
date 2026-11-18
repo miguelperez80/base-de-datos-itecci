@@ -5,6 +5,7 @@ const UNICOS = {
   UQ_ESTUDIANTE_CEDULA: 'Ya existe un estudiante con ese número de documento',
   UQ_DOCENTE_CEDULA: 'Ya existe un docente con ese número de documento',
   UQ_DOCENTE_EMAIL: 'Ya existe un docente con ese correo electrónico',
+  UQ_CONTRATO: 'El docente ya tiene contrato en ese periodo',
   UQ_TECNICO_CODIGO: 'Ya existe un programa técnico con ese código',
   UQ_TECNICO_NOMBRE: 'Ya existe un programa técnico con ese nombre',
   UQ_GRUPO: 'Ya existe un grupo para ese programa, periodo y semestre',

@@ -1,7 +1,7 @@
 import CrudPage from '../components/CrudPage.jsx';
 import { Insignia } from '../components/Tabla.jsx';
 import { ROLES } from '../context/AuthContext.jsx';
-import { hoyIso, programaCorto } from '../utils/formato.js';
+import { hoyIso, moneda, numero, programaCorto } from '../utils/formato.js';
 
 // Pantallas CRUD: cada una es solo la definición de sus columnas y campos.
 // Las reglas de formato repiten las del servidor para avisar antes de enviar.
@@ -100,6 +100,41 @@ export function Docentes() {
         { nombre: 'telefono', etiqueta: 'Teléfono (opcional)', ...TELEFONO },
         { nombre: 'anios_experiencia', etiqueta: 'Años de experiencia en docencia', tipo: 'number', requerido: true, min: 1, max: 60, mensaje: 'Se exige al menos 1 año de experiencia' },
         { nombre: 'activo', etiqueta: 'Docente activo', tipo: 'checkbox' },
+      ]}
+    />
+  );
+}
+
+// ---------------------------------------------------------------- Contratos docentes
+export function Contratos() {
+  return (
+    <CrudPage
+      titulo="Contratos docentes"
+      descripcion="Contrato por hora cátedra de cada docente en un periodo. Sin contrato en el periodo, el docente no puede tener grupos."
+      recurso="contratos"
+      singular="Contrato"
+      escriben={SOLO_COORDINADOR}
+      textoBuscar="Buscar por docente, documento o periodo…"
+      describir={(f) => `${f.docente} · ${f.periodo}`}
+      columnas={[
+        { clave: 'periodo', titulo: 'Periodo', render: (f) => <strong>{f.periodo}</strong> },
+        { clave: 'docente', titulo: 'Docente', render: (f) => <>{f.docente}{!f.activo && <div className="secundario">Inactivo</div>}</> },
+        { clave: 'horas_catedra', titulo: 'Horas', derecha: true, render: (f) => numero(f.horas_catedra) },
+        { clave: 'valor_hora', titulo: 'Valor hora', derecha: true, render: (f) => moneda(f.valor_hora) },
+        { clave: 'total', titulo: 'Total contrato', derecha: true, render: (f) => <strong>{moneda(f.total)}</strong> },
+        { clave: 'grupos', titulo: 'Grupos', derecha: true },
+        { clave: 'horas_dictadas', titulo: 'Horas dictadas', derecha: true, render: (f) => `${numero(f.horas_dictadas)} de ${numero(f.horas_catedra)}` },
+      ]}
+      inicial={{ docente_id: '', periodo_id: '', horas_catedra: 80, valor_hora: '' }}
+      campos={[
+        { nombre: 'docente_id', etiqueta: 'Docente', tipo: 'select', numerico: true, catalogo: 'docentes_todos', requerido: true, soloCrear: true, ancho: true,
+          ayuda: 'Solo se contrata a docentes activos' },
+        { nombre: 'periodo_id', etiqueta: 'Periodo', tipo: 'select', numerico: true, catalogo: 'periodos', requerido: true, soloCrear: true,
+          ayuda: 'Un contrato por docente y periodo' },
+        { nombre: 'horas_catedra', etiqueta: 'Horas cátedra', tipo: 'number', requerido: true, min: 1, max: 1000, mensaje: 'Entre 1 y 1.000 horas', seccion: 'Condiciones',
+          ayuda: 'Cada clase son 2,5 horas (6:30 p. m. a 9:00 p. m.)' },
+        { nombre: 'valor_hora', etiqueta: 'Valor por hora (pesos)', tipo: 'number', requerido: true, min: 1000, max: 1000000, mensaje: 'Entre $1.000 y $1.000.000, sin decimales',
+          patron: /^[0-9]+$/, inputMode: 'numeric', ejemplo: '25000' },
       ]}
     />
   );

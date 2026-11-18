@@ -38,6 +38,9 @@ export function crearRutas(c) {
   // Secretaría: proceso de matrícula y recaudo. Coordinación: además, oferta académica y docentes.
   api.use('/estudiantes', rutasCrud(c.estudiantes, { crear: v.estudianteBody, escriben: TODOS }));
   api.use('/docentes', rutasCrud(c.docentes, { crear: v.docenteBody, leen: SOLO_COORDINADOR, escriben: SOLO_COORDINADOR }));
+  api.use('/contratos', rutasCrud(c.contratos, {
+    crear: v.contratoCrearBody, editar: v.contratoEditarBody, leen: SOLO_COORDINADOR, escriben: SOLO_COORDINADOR,
+  }));
   api.use('/tecnicos', rutasCrud(c.tecnicos, { crear: v.tecnicoBody, escriben: SOLO_COORDINADOR }));
   api.use('/grupos', rutasCrud(c.grupos, { crear: v.grupoCrearBody, editar: v.grupoEditarBody, escriben: SOLO_COORDINADOR }));
 

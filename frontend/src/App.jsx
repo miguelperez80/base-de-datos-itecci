@@ -3,7 +3,7 @@ import { ROLES, useAuth } from './context/AuthContext.jsx';
 import MainLayout from './layouts/MainLayout.jsx';
 import Login from './pages/Login.jsx';
 import Tablero from './pages/Tablero.jsx';
-import { Docentes, Estudiantes, Grupos, Programas } from './pages/Catalogos.jsx';
+import { Contratos, Docentes, Estudiantes, Grupos, Programas } from './pages/Catalogos.jsx';
 import Matriculas from './pages/Matriculas.jsx';
 import Pagos from './pages/Pagos.jsx';
 import Cartera from './pages/Cartera.jsx';
@@ -38,6 +38,7 @@ export default function App() {
           <Route path="programas" element={<Programas />} />
           <Route element={<RutaProtegida roles={[ROLES.COORDINADOR]} />}>
             <Route path="docentes" element={<Docentes />} />
+            <Route path="contratos" element={<Contratos />} />
             <Route path="diccionario" element={<Diccionario />} />
           </Route>
           <Route path="*" element={<Mensaje titulo="Página no encontrada" texto="La dirección no corresponde a ninguna sección del sistema." />} />

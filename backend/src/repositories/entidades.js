@@ -24,6 +24,17 @@ export class DocenteRepository extends CrudRepository {
   }
 }
 
+// Contrato por hora cátedra: el docente y el periodo no cambian después de creado
+export class ContratoRepository extends CrudRepository {
+  constructor(db) {
+    super(db, {
+      paquete: 'pkg_api_contrato',
+      camposCrear: ['docente_id', 'periodo_id', 'horas_catedra', 'valor_hora'],
+      camposEditar: ['horas_catedra', 'valor_hora'],
+    });
+  }
+}
+
 export class TecnicoRepository extends CrudRepository {
   constructor(db) {
     super(db, { paquete: 'pkg_api_tecnico', camposCrear: ['codigo', 'nombre', 'activo'] });

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  BookOpen, ClipboardList, Database, GraduationCap, LayoutDashboard, LogOut, Menu, Presentation, Receipt, Users, Wallet,
+  BookOpen, ClipboardList, Database, FileSignature, GraduationCap, LayoutDashboard, LogOut, Menu, Presentation, Receipt, Users, Wallet,
 } from 'lucide-react';
 import logo from '../assets/logo-itecci.png';
 import { NOMBRE_ROL, ROLES, useAuth } from '../context/AuthContext.jsx';
@@ -21,6 +21,7 @@ export const MENU = [
     { ruta: '/grupos', texto: 'Grupos', icono: Presentation },
     { ruta: '/programas', texto: 'Programas técnicos', icono: BookOpen },
     { ruta: '/docentes', texto: 'Docentes', icono: GraduationCap, roles: [ROLES.COORDINADOR] },
+    { ruta: '/contratos', texto: 'Contratos docentes', icono: FileSignature, roles: [ROLES.COORDINADOR] },
   ] },
   { grupo: 'Administración', opciones: [
     { ruta: '/diccionario', texto: 'Diccionario de datos', icono: Database, roles: [ROLES.COORDINADOR] },

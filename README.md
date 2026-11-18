@@ -155,7 +155,7 @@ Antes de `REPORTES.sql` y `PRUEBAS.sql` active la salida: `SET SERVEROUTPUT ON` 
 | Autenticación con inicio de sesión | `POST /api/auth/login`, contraseñas con bcrypt, sesión en cookie `httpOnly` |
 | Formatos de entrada de datos | Validación en el formulario, en la API (`validators/schemas.js`) y en la base (`TRG_ESTUDIANTE_FORMATO`, `PKG_API_UTIL.a_fecha`) |
 | Restricción de acceso a funcionalidades | Por rol, en `routes/index.js` (servidor) y en el menú y los botones (interfaz) |
-| Controles de presentación de CRUD | Estudiantes, Docentes, Programas y Grupos (`components/CrudPage.jsx`) |
+| Controles de presentación de CRUD | Estudiantes, Docentes, Contratos docentes, Programas y Grupos (`components/CrudPage.jsx`) |
 | Procedimientos almacenados de Oracle | Toda operación pasa por un paquete PL/SQL; el backend no contiene sentencias SQL sobre tablas |
 | Manejo del diccionario de datos | Pantalla "Diccionario de datos" → `PKG_API_DICCIONARIO` (`USER_TABLES`, `USER_TAB_COLUMNS`, `USER_OBJECTS`, `USER_PROCEDURES`…) |
 

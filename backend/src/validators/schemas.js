@@ -84,6 +84,15 @@ export const docenteBody = z.object({
   activo: bandera,
 }).strict();
 
+// ---------- Contrato por hora cátedra ----------
+const contratoEditable = {
+  horas_catedra: entero(1, 1000),
+  valor_hora: z.coerce.number().int('El valor por hora no lleva decimales').min(1000, 'El valor mínimo por hora es $1.000').max(1_000_000),
+};
+export const contratoCrearBody = z.object({ docente_id: id, periodo_id: id, ...contratoEditable }).strict();
+// Docente y periodo no cambian después de crear el contrato (el formulario los envía, se ignoran)
+export const contratoEditarBody = z.object({ docente_id: id.optional(), periodo_id: id.optional(), ...contratoEditable }).strict();
+
 // ---------- Programa técnico ----------
 export const tecnicoBody = z.object({
   codigo: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/, 'Entre 2 y 10 letras o números, sin espacios'),
@@ -129,5 +138,5 @@ export const tablaParam = z.object({
   tabla: z.string().trim().toUpperCase().regex(/^[A-Z][A-Z0-9_$#]{0,29}$/, 'Nombre de tabla no válido'),
 });
 export const catalogoParam = z.object({
-  nombre: z.enum(['periodos', 'aulas', 'medios_pago', 'tecnicos', 'docentes', 'grupos_abiertos']),
+  nombre: z.enum(['periodos', 'aulas', 'medios_pago', 'tecnicos', 'docentes', 'docentes_todos', 'grupos_abiertos']),
 });
