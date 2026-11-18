@@ -1,9 +1,12 @@
 -- =====================================================================
 -- USUARIOS.sql : usuario de trabajo y roles (se ejecuta una sola vez, antes de DDL.sql). Ejecutar como SYSTEM (o SYS como SYSDBA).
--- Oracle 11g:  CONNECT system/<clave>
--- Oracle 18c:  conectarse al PDB (p. ej. ALTER SESSION SET CONTAINER = XEPDB1;) antes de crear el usuario.
---              En un CDB raíz el usuario común debe llamarse C##ITECCI.
+--   sqlplus system/<clave>@localhost:1521/freepdb1 @USUARIOS.sql
+-- El usuario se crea dentro de la base FREEPDB1 (Oracle 23ai/26ai Free). Si la conexión entra a la base
+-- principal (CDB), la primera línea cambia a FREEPDB1; si ya está en FREEPDB1, no cambia nada.
+-- En Oracle 18c XE la base se llama XEPDB1: cambie el nombre en la línea siguiente.
 -- =====================================================================
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
 -- Usuario de trabajo (dueño del esquema)
 CREATE USER itecci IDENTIFIED BY "Itecci2026#"
     DEFAULT TABLESPACE users TEMPORARY TABLESPACE temp QUOTA UNLIMITED ON users;
