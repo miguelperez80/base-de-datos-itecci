@@ -4,7 +4,6 @@ Proyecto final de Laboratorio de Bases de Datos II – Universidad del Cauca. Au
 
 Sistema para el Instituto Técnico Empresarial de la Cámara de Comercio de Ipiales (ITECCI): estudiantes, matrículas, recibos de caja, cartera, grupos, programas y docentes, sobre Oracle.
 
-- **Guía de sustentación:** [docs/GUIA_SUSTENTACION.md](docs/GUIA_SUSTENTACION.md)
 - **Interfaz publicada:** <https://miguelperez80.github.io/base-de-datos-itecci/> (solo el frontend; ver [GitHub Pages](#github-pages))
 
 ## Cómo ejecutarlo
@@ -68,7 +67,7 @@ Navegador (React, :5173) ──HTTP/JSON + cookie──> API Express (:3000) ─
 
 ```
 ├── *.sql                    Base de datos (ver tabla abajo)
-├── docs/                    Documento del proyecto, modelos conceptual y físico, guía de sustentación
+├── docs/                    Documento del proyecto y modelos conceptual y físico
 ├── backend/                 API REST · Node + Express
 │   └── src/
 │       ├── config/          Variables de entorno validadas y pool de conexiones
@@ -142,7 +141,6 @@ Antes de `REPORTES.sql` y `PRUEBAS.sql` active la salida: `SET SERVEROUTPUT ON` 
 
 ## Documentación
 
-- `docs/GUIA_SUSTENTACION.md`: guía para la sustentación (resumen, guion de demostración y preguntas probables).
 - `docs/Base de datos Oracle para ITECCI - Documento.pdf`: documento del proyecto (requisitos, reglas de negocio, modelos).
 - `docs/modelo_conceptual.png` y `docs/modelo_fisico.png`.
 
