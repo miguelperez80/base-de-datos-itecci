@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { numero } from '../utils/formato.js';
 
 /**
- * Tabla de datos genérica.
+ * Tabla de datos.
  * columnas: [{ clave, titulo, derecha?, render?(fila) }]
  */
 export function Tabla({ columnas, filas, cargando, error, vacio = 'No hay registros para mostrar', alPulsarFila, acciones, clave = 'id' }) {
@@ -46,6 +46,7 @@ export function Tabla({ columnas, filas, cargando, error, vacio = 'No hay regist
   );
 }
 
+/** Controles de paginación. */
 export function Paginacion({ pagina, paginas, total, alCambiar }) {
   return (
     <div className="paginacion">
@@ -63,6 +64,7 @@ export function Paginacion({ pagina, paginas, total, alCambiar }) {
   );
 }
 
+/** Campo de búsqueda. */
 export function Buscador({ valor, alCambiar, texto = 'Buscar…' }) {
   return (
     <div className="buscador">
@@ -72,6 +74,7 @@ export function Buscador({ valor, alCambiar, texto = 'Buscar…' }) {
   );
 }
 
+/** Pestañas para filtrar por estado. */
 export function Pestanas({ opciones, valor, alCambiar, etiqueta }) {
   return (
     <div className="pestanas" role="group" aria-label={etiqueta}>
@@ -88,11 +91,12 @@ const TONOS = {
   'En mora': 'mal', 'Vencida': 'mal', 'Anulado': 'mal', 'Anulada': 'mal', 'Cancelado': 'mal', 'Retirada': 'mal', 'INVALID': 'mal',
 };
 
-// Estado como texto + color (el color nunca es la única señal)
+/** Etiqueta de estado con texto y color. */
 export function Insignia({ children, tono }) {
   return <span className={`insignia ${tono ?? TONOS[children] ?? 'neutro'}`}>{children}</span>;
 }
 
+/** Encabezado de una pantalla. */
 export function Cabecera({ titulo, descripcion, children }) {
   return (
     <div className="pagina-cabecera">

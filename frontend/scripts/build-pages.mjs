@@ -1,5 +1,4 @@
-// Construye el frontend para GitHub Pages: ruta base del repositorio y 404.html para que
-// las rutas internas (/estudiantes, /cartera...) abran la aplicación al recargar.
+/** Compila el frontend para GitHub Pages con la ruta base del repositorio. */
 import { execSync } from 'node:child_process';
 import { copyFileSync, writeFileSync } from 'node:fs';
 

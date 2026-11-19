@@ -1,7 +1,6 @@
 import { OracleRepository, salida } from './OracleRepository.js';
 
-// Repositorios de los procesos que no son un CRUD simple.
-
+/** Usuarios de la aplicación (pkg_api_seguridad). */
 export class UsuarioRepository extends OracleRepository {
   buscarPorUsername(username) {
     return this.fila('pkg_api_seguridad.obtener_usuario(:username)', { username });
@@ -12,12 +11,14 @@ export class UsuarioRepository extends OracleRepository {
   }
 }
 
+/** Listas desplegables (pkg_api_catalogo). */
 export class CatalogoRepository extends OracleRepository {
   listar(nombre) {
     return this.filas('pkg_api_catalogo.listar(:nombre)', { nombre });
   }
 }
 
+/** Matrículas, plan de pagos y recibos (pkg_api_matricula). */
 export class MatriculaRepository extends OracleRepository {
   listar({ estado, ...filtro }) {
     return this.pagina('pkg_api_matricula.listar', filtro, { estado: estado ?? null });
@@ -48,6 +49,7 @@ export class MatriculaRepository extends OracleRepository {
   }
 }
 
+/** Recibos de caja (pkg_api_pago). */
 export class PagoRepository extends OracleRepository {
   listar(filtro) {
     return this.pagina('pkg_api_pago.listar', filtro);
@@ -66,6 +68,7 @@ export class PagoRepository extends OracleRepository {
   }
 }
 
+/** Indicadores, recaudo y cartera (pkg_api_reportes). */
 export class ReporteRepository extends OracleRepository {
   indicadores() {
     return this.fila('pkg_api_reportes.indicadores');
@@ -88,6 +91,7 @@ export class ReporteRepository extends OracleRepository {
   }
 }
 
+/** Diccionario de datos de Oracle (pkg_api_diccionario). */
 export class DiccionarioRepository extends OracleRepository {
   tablas() {
     return this.filas('pkg_api_diccionario.tablas');

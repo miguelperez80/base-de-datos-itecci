@@ -6,7 +6,7 @@ export const ROLES = Object.freeze({ COORDINADOR: 'COORDINADOR', SECRETARIA: 'SE
 export const TODOS = [ROLES.COORDINADOR, ROLES.SECRETARIA];
 export const SOLO_COORDINADOR = [ROLES.COORDINADOR];
 
-// Autenticación: la sesión viaja en una cookie httpOnly con un JWT firmado.
+/** Verifica el token de la cookie de sesión y deja el usuario en req.usuario. */
 export const autenticar = (tokenService) => (req, _res, next) => {
   const token = req.cookies?.[COOKIE_SESION];
   if (!token) return next(AppError.noAutenticado());
@@ -18,7 +18,7 @@ export const autenticar = (tokenService) => (req, _res, next) => {
   }
 };
 
-// Autorización por rol: se decide en el servidor, no en la interfaz.
+/** Permite continuar solo a los roles indicados. */
 export const autorizar = (...roles) => (req, _res, next) => {
   if (!req.usuario) return next(AppError.noAutenticado());
   if (!roles.includes(req.usuario.rol)) {

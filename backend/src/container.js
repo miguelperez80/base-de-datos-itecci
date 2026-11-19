@@ -12,10 +12,7 @@ import { MatriculaService, PagoService, ReporteService, DiccionarioService } fro
 import * as ctl from './controllers/controllers.js';
 import { autenticar } from './middlewares/auth.js';
 
-/**
- * Raíz de composición: el único lugar donde se crean los objetos y se conectan entre sí
- * (inyección de dependencias manual). Para probar una capa basta con pasarle un doble de la inferior.
- */
+/** Crea repositorios, servicios y controladores, e inyecta en cada uno la capa inferior. */
 export function crearContenedor(conexion = db) {
   const tokens = new TokenService({ secreto: env.JWT_SECRET, minutos: env.JWT_EXPIRES_MIN });
   const diccionarioRepo = new DiccionarioRepository(conexion);

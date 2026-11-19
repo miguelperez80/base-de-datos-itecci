@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 
+/** Pantalla de mensaje (acceso restringido o página no encontrada). */
 export function Mensaje({ titulo, texto }) {
   return (
     <div className="centro">

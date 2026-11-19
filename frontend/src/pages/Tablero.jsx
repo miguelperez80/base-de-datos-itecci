@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { Cabecera, Insignia } from '../components/Tabla.jsx';
 import { mes, moneda, monedaCorta, numero, programaCorto } from '../utils/formato.js';
 
+/** Tarjeta con un indicador. */
 function Indicador({ titulo, valor, nota, acento }) {
   return (
     <div className={`tarjeta indicador ${acento ? 'acento' : ''}`}>
@@ -15,6 +16,7 @@ function Indicador({ titulo, valor, nota, acento }) {
   );
 }
 
+/** Tablero con indicadores, recaudo mensual y matrículas por programa. */
 export default function Tablero() {
   const { usuario } = useAuth();
   const [datos, setDatos] = useState(null);

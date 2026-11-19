@@ -1,12 +1,10 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-// La configuración se valida al arrancar: si falta algo, el servidor no inicia.
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   HOST: z.string().default('127.0.0.1'),
-  // Uno o varios orígenes separados por coma (el frontend local y, si se publica, el de GitHub Pages)
   FRONTEND_ORIGIN: z.string().default('http://localhost:5173')
     .transform((v) => v.split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean))
     .pipe(z.array(z.string().url()).min(1)),
@@ -24,4 +22,5 @@ if (!parsed.success) {
   process.exit(1);
 }
 
+/** Configuración validada a partir de las variables de entorno. */
 export const env = Object.freeze(parsed.data);

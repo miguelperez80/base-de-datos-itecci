@@ -6,7 +6,7 @@ import {
 import logo from '../assets/logo-itecci.png';
 import { NOMBRE_ROL, ROLES, useAuth } from '../context/AuthContext.jsx';
 
-// Menú de la aplicación. `roles` limita quién ve cada opción (el backend vuelve a comprobarlo).
+/** Opciones del menú y roles que pueden ver cada una. */
 export const MENU = [
   { grupo: 'General', opciones: [
     { ruta: '/', texto: 'Tablero', icono: LayoutDashboard },
@@ -28,10 +28,7 @@ export const MENU = [
   ] },
 ];
 
-/**
- * Página maestra: barra lateral, barra superior y el área donde se dibuja cada pantalla (<Outlet />).
- * Todas las pantallas internas comparten esta estructura.
- */
+/** Página maestra: menú lateral, barra superior y área de contenido de cada pantalla. */
 export default function MainLayout() {
   const { usuario, cerrarSesion, tieneRol } = useAuth();
   const [abierto, setAbierto] = useState(false);

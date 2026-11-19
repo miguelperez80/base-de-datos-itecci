@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 
-// Ventana modal accesible: se cierra con Esc, lleva el foco adentro y lo devuelve al cerrar.
+/** Ventana modal que se cierra con Esc y mantiene el foco adentro. */
 export default function Modal({ titulo, tamano = '', onCerrar, children, pie }) {
   const idTitulo = useId();
   const caja = useRef(null);
@@ -19,7 +19,6 @@ export default function Modal({ titulo, tamano = '', onCerrar, children, pie }) 
       document.body.style.overflow = '';
       anterior?.focus?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -36,6 +35,7 @@ export default function Modal({ titulo, tamano = '', onCerrar, children, pie }) 
   );
 }
 
+/** Ventana para confirmar una acción. */
 export function Confirmacion({ titulo, mensaje, textoConfirmar = 'Eliminar', ocupado, onConfirmar, onCerrar }) {
   return (
     <Modal

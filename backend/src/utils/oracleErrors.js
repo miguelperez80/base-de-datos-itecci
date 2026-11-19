@@ -1,6 +1,5 @@
 import { AppError } from './AppError.js';
 
-// Mensajes legibles para las restricciones UNIQUE más comunes del esquema.
 const UNICOS = {
   UQ_ESTUDIANTE_CEDULA: 'Ya existe un estudiante con ese número de documento',
   UQ_DOCENTE_CEDULA: 'Ya existe un docente con ese número de documento',
@@ -16,18 +15,13 @@ const UNICOS = {
 
 const nombreRestriccion = (mensaje) => /\(\w+\.(\w+)\)/.exec(mensaje ?? '')?.[1];
 
-// Texto que acompaña a ORA-20xxx (lo escribe RAISE_APPLICATION_ERROR), sin la pila de PL/SQL.
 const mensajeNegocio = (mensaje) =>
   (mensaje ?? '').split('\n')[0].replace(/^ORA-\d+:\s*/, '').trim() || 'La operación no cumple una regla del negocio';
 
-/**
- * Convierte un error de Oracle en un AppError con el código HTTP adecuado.
- * Devuelve null si el error no es de Oracle o no se reconoce (se tratará como 500).
- */
+/** Convierte un error de Oracle en un AppError con su código HTTP; retorna null si no lo reconoce. */
 export function traducirErrorOracle(err) {
   const num = err?.errorNum;
   if (typeof num !== 'number') {
-    // Errores del controlador (NJS-xxx): casi siempre la base de datos no responde
     if (typeof err?.code === 'string' && err.code.startsWith('NJS-')) {
       return new AppError(503, 'BD_NO_DISPONIBLE', 'La base de datos no está disponible. Intente de nuevo en unos segundos.');
     }

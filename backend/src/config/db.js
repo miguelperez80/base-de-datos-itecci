@@ -5,6 +5,7 @@ oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 
 let pool;
 
+/** Crea el pool de conexiones a Oracle. */
 export async function iniciarPool() {
   pool = await oracledb.createPool({
     user: env.DB_USER,
@@ -17,6 +18,7 @@ export async function iniciarPool() {
   return pool;
 }
 
+/** Cierra el pool de conexiones. */
 export async function cerrarPool() {
   if (pool) {
     await pool.close(5);
@@ -24,7 +26,7 @@ export async function cerrarPool() {
   }
 }
 
-// Único punto por el que los repositorios obtienen conexiones (se les inyecta este objeto).
+/** Acceso a las conexiones del pool. */
 export const db = {
   getConnection() {
     if (!pool) throw new Error('El pool de conexiones no se ha iniciado');

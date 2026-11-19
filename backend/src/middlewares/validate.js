@@ -1,9 +1,6 @@
 import { AppError } from '../utils/AppError.js';
 
-/**
- * Valida params, query y body con esquemas Zod. Lo validado queda en req.valid
- * y es lo único que usan los controladores (nunca req.body directamente).
- */
+/** Valida params, query y body con esquemas Zod y deja el resultado en req.valid. */
 export const validar = (esquemas) => (req, _res, next) => {
   req.valid = req.valid ?? {};
   for (const parte of ['params', 'query', 'body']) {

@@ -6,11 +6,11 @@ export const NOMBRE_ROL = { COORDINADOR: 'Coordinador General', SECRETARIA: 'Sec
 
 const AuthContext = createContext(null);
 
+/** Sesión del usuario: inicio, cierre y verificación al abrir la aplicación. */
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
 
-  // Al abrir la aplicación se pregunta al backend si la cookie de sesión sigue vigente
   useEffect(() => {
     api.get('/auth/yo')
       .then((r) => setUsuario(r.usuario))

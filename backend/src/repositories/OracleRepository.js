@@ -1,6 +1,6 @@
 import oracledb from 'oracledb';
 
-// Parámetros de salida de los procedimientos almacenados
+/** Tipos de los parámetros de salida. */
 export const salida = {
   cursor: () => ({ dir: oracledb.BIND_OUT, type: oracledb.CURSOR }),
   numero: () => ({ dir: oracledb.BIND_OUT, type: oracledb.NUMBER }),
@@ -9,24 +9,20 @@ export const salida = {
 
 const enMinusculas = (fila) => Object.fromEntries(Object.entries(fila).map(([k, v]) => [k.toLowerCase(), v]));
 
-// Toma de `datos` solo los campos indicados; lo que falte viaja como NULL.
+/** Toma de un objeto los campos indicados; los que falten quedan en null. */
 export const tomar = (datos, campos) => Object.fromEntries(campos.map((c) => [c, datos[c] ?? null]));
 
-// "p_a => :a, p_b => :b": parámetros por nombre para llamar un procedimiento
+/** Arma la lista de parámetros por nombre: p_campo => :campo. */
 export const parametros = (campos) => campos.map((c) => `p_${c} => :${c}`).join(', ');
 
-/**
- * Base de todos los repositorios. Es la única capa que habla con Oracle y lo hace
- * exclusivamente llamando paquetes PL/SQL con variables de enlace (bind variables):
- * ningún dato del usuario se concatena en el texto SQL.
- */
+/** Base de los repositorios: ejecuta paquetes PL/SQL con variables de enlace. */
 export class OracleRepository {
   /** @param {{ getConnection: () => Promise<import('oracledb').Connection> }} db */
   constructor(db) {
     this.db = db;
   }
 
-  /** Ejecuta un bloque PL/SQL y devuelve sus parámetros de salida (los cursores ya leídos como arreglos). */
+  /** Ejecuta un bloque PL/SQL y devuelve sus parámetros de salida, con los cursores leídos como arreglos. */
   async llamar(plsql, binds = {}) {
     const conexion = await this.db.getConnection();
     try {
@@ -46,19 +42,19 @@ export class OracleRepository {
     }
   }
 
-  /** Función que devuelve SYS_REFCURSOR -> arreglo de filas. */
+  /** Ejecuta una función que devuelve SYS_REFCURSOR y retorna sus filas. */
   async filas(llamada, binds = {}) {
     const { cur } = await this.llamar(`BEGIN :cur := ${llamada}; END;`, { ...binds, cur: salida.cursor() });
     return cur;
   }
 
-  /** Igual que filas(), pero devuelve la primera fila o null. */
+  /** Ejecuta una función que devuelve SYS_REFCURSOR y retorna la primera fila o null. */
   async fila(llamada, binds = {}) {
     const [primera] = await this.filas(llamada, binds);
     return primera ?? null;
   }
 
-  /** Procedimiento "listar" paginado: (p_busqueda, [extras], p_offset, p_limit, p_total OUT, p_cursor OUT). */
+  /** Ejecuta un procedimiento listar paginado y retorna las filas y el total. */
   async pagina(procedimiento, { q, offset, limit }, extras = {}) {
     const extra = Object.keys(extras).map((c) => `p_${c} => :${c}, `).join('');
     const { total, cur } = await this.llamar(

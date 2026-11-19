@@ -13,7 +13,7 @@ const ESTADOS = [
   { valor: 'Finalizada', texto: 'Finalizadas' }, { valor: 'Retirada', texto: 'Retiradas' },
 ];
 
-// Asistente de matrícula: elegir estudiante (búsqueda) y grupo abierto. Las reglas las aplica sp_matricular.
+/** Matricula un estudiante en un grupo abierto. */
 function NuevaMatricula({ alCerrar, alCrear }) {
   const estudiantes = useListado('/estudiantes', { porPagina: 6 });
   const [estudiante, setEstudiante] = useState(null);
@@ -89,6 +89,7 @@ function NuevaMatricula({ alCerrar, alCrear }) {
   );
 }
 
+/** Listado de matrículas con su detalle. */
 export default function Matriculas() {
   const avisos = useAvisos();
   const [estado, setEstado] = useState(null);

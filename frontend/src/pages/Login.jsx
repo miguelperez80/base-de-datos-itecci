@@ -4,6 +4,7 @@ import { CircleAlert, LogIn } from 'lucide-react';
 import logo from '../assets/logo-itecci.png';
 import { useAuth } from '../context/AuthContext.jsx';
 
+/** Pantalla de inicio de sesión. */
 export default function Login() {
   const { usuario, cargando, iniciarSesion } = useAuth();
   const { state } = useLocation();

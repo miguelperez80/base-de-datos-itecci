@@ -3,12 +3,10 @@ import { CircleAlert } from 'lucide-react';
 import { ApiError } from '../api/http.js';
 
 /**
- * Formulario generado a partir de una definición de campos:
- *   { nombre, etiqueta, tipo, requerido, patron, mensaje, min, max, maxLength, opciones, catalogo, ancho, soloCrear, ayuda, seccion }
- * tipo: text | email | tel | date | number | select | textarea | checkbox
- *
- * Valida en el navegador para dar respuesta inmediata; el servidor vuelve a validar todo
- * y sus errores por campo se muestran en el mismo lugar.
+ * Valida los valores del formulario según la definición de los campos.
+ * Campo: { nombre, etiqueta, tipo, requerido, patron, mensaje, min, max, maxLength, opciones, catalogo, ancho, soloCrear, ayuda, seccion }
+ * Tipos: text | email | tel | date | number | select | textarea | checkbox
+ * @returns {Object} errores por nombre de campo
  */
 export function validarCampos(campos, valores) {
   const errores = {};
@@ -29,7 +27,7 @@ export function validarCampos(campos, valores) {
   return errores;
 }
 
-// Convierte lo escrito al tipo que espera la API
+/** Convierte los valores del formulario al tipo que espera la API. */
 export function aCarga(campos, valores) {
   const carga = {};
   for (const c of campos) {
@@ -41,6 +39,7 @@ export function aCarga(campos, valores) {
   return carga;
 }
 
+/** Campo de formulario con su etiqueta, ayuda y error. */
 export function Campo({ campo, valor, error, alCambiar, opciones, deshabilitado }) {
   const id = useId();
   const idError = `${id}-error`;
@@ -99,6 +98,7 @@ export function Campo({ campo, valor, error, alCambiar, opciones, deshabilitado 
   );
 }
 
+/** Formulario generado a partir de la definición de sus campos. */
 export default function Formulario({ campos, inicial, catalogos = {}, editando, textoGuardar = 'Guardar', alGuardar, alCancelar }) {
   const [valores, setValores] = useState(inicial);
   const [errores, setErrores] = useState({});

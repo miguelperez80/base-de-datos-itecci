@@ -4,6 +4,7 @@ import { Buscador, Cabecera, Insignia, Paginacion, Tabla } from '../components/T
 import DetalleMatricula from '../components/DetalleMatricula.jsx';
 import { fecha, moneda } from '../utils/formato.js';
 
+/** Listado de recibos de caja. */
 export default function Pagos() {
   const lista = useListado('/pagos');
   const [detalle, setDetalle] = useState(null);

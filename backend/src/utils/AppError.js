@@ -1,4 +1,4 @@
-// Error controlado de la aplicación: lleva el código HTTP y un mensaje que sí se puede mostrar al usuario.
+/** Error de la aplicación con código HTTP y mensaje para el usuario. */
 export class AppError extends Error {
   constructor(status, codigo, mensaje, detalles) {
     super(mensaje);

@@ -3,9 +3,6 @@ import { Insignia } from '../components/Tabla.jsx';
 import { ROLES } from '../context/AuthContext.jsx';
 import { hoyIso, moneda, numero, programaCorto } from '../utils/formato.js';
 
-// Pantallas CRUD: cada una es solo la definición de sus columnas y campos.
-// Las reglas de formato repiten las del servidor para avisar antes de enviar.
-
 const opciones = (lista) => lista.map((v) => ({ valor: v, texto: v }));
 const TODOS = [ROLES.COORDINADOR, ROLES.SECRETARIA];
 const SOLO_COORDINADOR = [ROLES.COORDINADOR];
@@ -17,7 +14,7 @@ const TELEFONO = { tipo: 'tel', patron: /^[0-9+ ()-]{7,20}$/, mensaje: 'Entre 7 
 const CELULAR = { tipo: 'tel', patron: /^3[0-9]{9}$/, mensaje: 'Celular de 10 dígitos que inicie en 3', inputMode: 'numeric', maxLength: 10, ejemplo: '3001234567' };
 const siNo = (v) => <Insignia tono={v ? 'ok' : 'neutro'}>{v ? 'Activo' : 'Inactivo'}</Insignia>;
 
-// ---------------------------------------------------------------- Estudiantes
+/** CRUD de estudiantes. */
 export function Estudiantes() {
   return (
     <CrudPage
@@ -70,7 +67,7 @@ export function Estudiantes() {
   );
 }
 
-// ---------------------------------------------------------------- Docentes
+/** CRUD de docentes. */
 export function Docentes() {
   return (
     <CrudPage
@@ -105,7 +102,7 @@ export function Docentes() {
   );
 }
 
-// ---------------------------------------------------------------- Contratos docentes
+/** CRUD de contratos por hora cátedra. */
 export function Contratos() {
   return (
     <CrudPage
@@ -140,7 +137,7 @@ export function Contratos() {
   );
 }
 
-// ---------------------------------------------------------------- Programas técnicos
+/** CRUD de programas técnicos. */
 export function Programas() {
   return (
     <CrudPage
@@ -167,12 +164,12 @@ export function Programas() {
   );
 }
 
-// ---------------------------------------------------------------- Grupos
 const DIAS = [
   { valor: 1, texto: 'Lunes' }, { valor: 2, texto: 'Martes' }, { valor: 3, texto: 'Miércoles' },
   { valor: 4, texto: 'Jueves' }, { valor: 5, texto: 'Viernes' }, { valor: 6, texto: 'Sábado' },
 ];
 
+/** CRUD de grupos y su horario. */
 export function Grupos() {
   return (
     <CrudPage

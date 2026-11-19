@@ -177,7 +177,7 @@ DECLARE
   v_num VARCHAR2(20);
 BEGIN
   pkg_util.pl('P11. Diploma sin cumplir requisitos');
-  SELECT MIN(estudiante_id) INTO v_est FROM matricula WHERE grupo_id = 17;   -- COM-2026B-S1 (I semestre)
+  SELECT MIN(estudiante_id) INTO v_est FROM matricula WHERE grupo_id = 17;
   pkg_certificacion.emitir_diploma(v_est, 2, 1, v_num);
   pkg_util.pl('   FALLÓ: se esperaba error');
 EXCEPTION
@@ -226,7 +226,7 @@ BEGIN
   pkg_estudiante.registrar_documento(v_id, 'Cédula');
   pkg_estudiante.registrar_documento(v_id, 'Diploma de bachiller');
 
-  sp_matricular(v_id, 17, 2);                         -- COM-2026B-S1
+  sp_matricular(v_id, 17, 2);
   SELECT id INTO v_mat FROM matricula WHERE estudiante_id = v_id;
   pkg_util.pl('   Matrícula ' || v_mat || ' creada; saldo ' || pkg_util.fn_moneda(pkg_util.fn_saldo(v_mat)));
 
@@ -235,7 +235,7 @@ BEGIN
   pkg_util.pl('   Recibo ' || v_rec || ' por ' || pkg_util.fn_moneda(220000)
               || '; saldo ' || pkg_util.fn_moneda(pkg_util.fn_saldo(v_mat)));
 
-  UPDATE pago SET factura_estado = 'Emitida' WHERE numero_recibo = v_rec;   -- T5 asigna número y fecha
+  UPDATE pago SET factura_estado = 'Emitida' WHERE numero_recibo = v_rec;
   SELECT factura_numero INTO v_fact FROM pago WHERE numero_recibo = v_rec;
   pkg_util.pl('   Factura asignada por T5: ' || v_fact);
 
@@ -287,13 +287,13 @@ BEGIN
   pkg_grupo.consultar(v_grupo);
 
   BEGIN
-    pkg_grupo.cambiar_estado(v_grupo, 'Activo');      -- no tiene 15 matriculados
+    pkg_grupo.cambiar_estado(v_grupo, 'Activo');
   EXCEPTION
     WHEN OTHERS THEN pkg_util.pl('   Esperado -> ' || SQLERRM);
   END;
 
   pkg_grupo.eliminar(v_grupo);
-  pkg_docente.eliminar(1);                            -- tiene grupos: se inactiva
+  pkg_docente.eliminar(1);
   ROLLBACK;
   pkg_util.pl('   ROLLBACK aplicado');
 EXCEPTION

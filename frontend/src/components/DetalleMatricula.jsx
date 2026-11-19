@@ -8,19 +8,15 @@ import Modal from './Modal.jsx';
 import Formulario from './Formulario.jsx';
 import { Insignia } from './Tabla.jsx';
 
-/**
- * Ficha de una matrícula: datos, plan de pagos y recibos.
- * Desde aquí se registra un pago, se anula un recibo (coordinación) o se retira la matrícula.
- */
+/** Detalle de una matrícula con su plan de pagos y recibos; permite registrar pagos, anular recibos y retirar la matrícula. */
 export default function DetalleMatricula({ id, alCerrar, alCambiar }) {
   const { esCoordinador } = useAuth();
   const avisos = useAvisos();
   const [m, setM] = useState(null);
-  const [modo, setModo] = useState('ver'); // ver | pago | retiro | { anular: pago }
+  const [modo, setModo] = useState('ver');
   const [medios, setMedios] = useState([]);
 
   const cargar = useCallback(() => api.get(`/matriculas/${id}`).then(setM).catch((e) => { avisos.error(e.message); alCerrar(); }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [id]);
 
   useEffect(() => {

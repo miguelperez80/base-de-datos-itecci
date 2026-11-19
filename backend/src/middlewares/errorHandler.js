@@ -3,13 +3,12 @@ import { AppError } from '../utils/AppError.js';
 import { traducirErrorOracle } from '../utils/oracleErrors.js';
 import { logger } from '../utils/logger.js';
 
+/** Responde 404 para rutas inexistentes. */
 export function rutaNoEncontrada(req, _res, next) {
   next(AppError.noEncontrado(`No existe la ruta ${req.method} ${req.path}`));
 }
 
-// Manejador central: todo error termina aquí y sale con el mismo formato JSON.
-// Los errores no controlados nunca muestran detalles internos (pila, SQL, ORA-xxxxx) al cliente.
-// eslint-disable-next-line no-unused-vars
+/** Responde todos los errores con el formato { error: { codigo, mensaje, detalles } }. */
 export function manejadorErrores(err, req, res, _next) {
   let error = err instanceof AppError ? err : traducirErrorOracle(err);
 

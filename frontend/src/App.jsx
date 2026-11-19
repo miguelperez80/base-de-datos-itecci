@@ -10,7 +10,7 @@ import Cartera from './pages/Cartera.jsx';
 import Diccionario from './pages/Diccionario.jsx';
 import { Mensaje } from './pages/Mensaje.jsx';
 
-// Solo deja pasar con sesión iniciada y, si se indica, con el rol requerido.
+/** Muestra la ruta solo con sesión iniciada y, si se indica, con el rol requerido. */
 function RutaProtegida({ roles }) {
   const { usuario, cargando, tieneRol } = useAuth();
   const ubicacion = useLocation();
@@ -23,6 +23,7 @@ function RutaProtegida({ roles }) {
   return <Outlet />;
 }
 
+/** Rutas de la aplicación. */
 export default function App() {
   return (
     <Routes>

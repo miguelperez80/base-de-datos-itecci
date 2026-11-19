@@ -40,13 +40,13 @@ const ORIGEN = {
   subprogramas: 'USER_PROCEDURES y USER_ARGUMENTS',
 };
 
-// Consulta del diccionario de datos de Oracle a través del paquete pkg_diccionario.
+/** Consulta del diccionario de datos de Oracle: tablas, columnas, objetos y subprogramas. */
 export default function Diccionario() {
   const [vista, setVista] = useState('tablas');
   const [filas, setFilas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
-  const [tabla, setTabla] = useState(null); // { nombre, columnas }
+  const [tabla, setTabla] = useState(null);
 
   useEffect(() => {
     let vigente = true;

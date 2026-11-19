@@ -164,13 +164,13 @@ END;
 DECLARE
   v_grupo  grupo.codigo%TYPE := 'SIS-2026B-S2';
 
-  TYPE t_asistencia IS RECORD (                                       -- RECORD
-    cedula      VARCHAR2(15),            -- mismo tipo de estudiante.cedula (con %TYPE el campo "estudiante" oculta a la tabla: PLS-00320)
+  TYPE t_asistencia IS RECORD (
+    cedula      VARCHAR2(15),
     estudiante  VARCHAR2(170),
     sesiones    NUMBER,
     asistidas   NUMBER,
     porcentaje  NUMBER);
-  TYPE t_tab_asistencia IS TABLE OF t_asistencia INDEX BY PLS_INTEGER;   -- TABLE
+  TYPE t_tab_asistencia IS TABLE OF t_asistencia INDEX BY PLS_INTEGER;
   v_lista    t_tab_asistencia;
 
   i          PLS_INTEGER;
@@ -179,7 +179,7 @@ DECLARE
   v_marca    VARCHAR2(30);
 BEGIN
   SELECT e.cedula, e.apellidos || ' ' || e.nombres, v.sesiones, v.asistidas, v.porcentaje
-    BULK COLLECT INTO v_lista                                         -- BULK COLLECT
+    BULK COLLECT INTO v_lista
     FROM v_asistencia_matricula v
     JOIN estudiante e ON e.id = v.estudiante_id
     JOIN grupo g      ON g.id = v.grupo_id
@@ -196,7 +196,7 @@ BEGIN
   END IF;
 
   i := v_lista.FIRST;
-  WHILE i IS NOT NULL LOOP                                            -- WHILE
+  WHILE i IS NOT NULL LOOP
     IF v_lista(i).porcentaje IS NULL THEN
       v_marca := 'sin sesiones';
     ELSIF v_lista(i).porcentaje < pkg_util.c_asist_minima THEN
@@ -231,7 +231,7 @@ DECLARE
   TYPE t_mes IS RECORD (efectivo NUMBER, datafono NUMBER, transferencia NUMBER, recibos NUMBER);
   v_m        t_mes;
 
-  TYPE t_totales IS TABLE OF NUMBER INDEX BY VARCHAR2(20);           -- tabla indexada por texto
+  TYPE t_totales IS TABLE OF NUMBER INDEX BY VARCHAR2(20);
   v_tot      t_totales;
   v_medio    VARCHAR2(20);
   v_gran     NUMBER := 0;
@@ -245,7 +245,7 @@ BEGIN
   pkg_util.pl(RPAD('Mes', 12) || LPAD('Efectivo', 13) || LPAD('Datáfono', 13) || LPAD('Transferencia', 15)
               || LPAD('Recibos', 9) || LPAD('Total', 14));
 
-  LOOP                                                                -- LOOP básico
+  LOOP
     EXIT WHEN v_mes > v_ultimo;
 
     SELECT NVL(SUM(CASE mp.nombre WHEN 'Efectivo'      THEN p.valor END), 0),

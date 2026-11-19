@@ -4,7 +4,7 @@ import { validar } from '../middlewares/validate.js';
 import { autorizar, TODOS, SOLO_COORDINADOR } from '../middlewares/auth.js';
 import * as v from '../validators/schemas.js';
 
-/** Rutas REST de un CRUD. Los permisos por rol se declaran al montarlo. */
+/** Crea las rutas REST de un CRUD con los roles que pueden leer, escribir y eliminar. */
 function rutasCrud(controlador, { crear, editar = crear, leen = TODOS, escriben, eliminan = SOLO_COORDINADOR }) {
   const r = Router();
   r.get('/', autorizar(...leen), validar({ query: v.listaQuery }), controlador.listar);
@@ -15,13 +15,12 @@ function rutasCrud(controlador, { crear, editar = crear, leen = TODOS, escriben,
   return r;
 }
 
+/** Crea todas las rutas de la API con su autenticación, permisos y validación. */
 export function crearRutas(c) {
   const api = Router();
 
-  // ---- Públicas ----
   api.get('/salud', c.salud);
 
-  // Como máximo 10 intentos de inicio de sesión cada 15 minutos por IP (fuerza bruta)
   const limiteLogin = rateLimit({
     windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false,
     skipSuccessfulRequests: true,
@@ -30,12 +29,10 @@ export function crearRutas(c) {
   api.post('/auth/login', limiteLogin, validar({ body: v.loginBody }), c.auth.iniciarSesion);
   api.post('/auth/logout', c.auth.cerrarSesion);
 
-  // ---- Todo lo demás exige sesión ----
   api.use(c.autenticar);
   api.get('/auth/yo', c.auth.yo);
   api.get('/catalogos/:nombre', validar({ params: v.catalogoParam }), c.catalogos.listar);
 
-  // Secretaría: proceso de matrícula y recaudo. Coordinación: además, oferta académica y docentes.
   api.use('/estudiantes', rutasCrud(c.estudiantes, { crear: v.estudianteBody, escriben: TODOS }));
   api.use('/docentes', rutasCrud(c.docentes, { crear: v.docenteBody, leen: SOLO_COORDINADOR, escriben: SOLO_COORDINADOR }));
   api.use('/contratos', rutasCrud(c.contratos, {

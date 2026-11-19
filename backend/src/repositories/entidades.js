@@ -1,7 +1,6 @@
 import { CrudRepository } from './CrudRepository.js';
 
-// Repositorios CRUD: cada uno apunta a su paquete PL/SQL y declara los parámetros que este recibe.
-
+/** Estudiantes (pkg_api_estudiante). */
 export class EstudianteRepository extends CrudRepository {
   constructor(db) {
     super(db, {
@@ -15,6 +14,7 @@ export class EstudianteRepository extends CrudRepository {
   }
 }
 
+/** Docentes (pkg_api_docente). */
 export class DocenteRepository extends CrudRepository {
   constructor(db) {
     super(db, {
@@ -24,7 +24,7 @@ export class DocenteRepository extends CrudRepository {
   }
 }
 
-// Contrato por hora cátedra: el docente y el periodo no cambian después de creado
+/** Contratos por hora cátedra (pkg_api_contrato). */
 export class ContratoRepository extends CrudRepository {
   constructor(db) {
     super(db, {
@@ -35,12 +35,14 @@ export class ContratoRepository extends CrudRepository {
   }
 }
 
+/** Programas técnicos (pkg_api_tecnico). */
 export class TecnicoRepository extends CrudRepository {
   constructor(db) {
     super(db, { paquete: 'pkg_api_tecnico', camposCrear: ['codigo', 'nombre', 'activo'] });
   }
 }
 
+/** Grupos y su horario (pkg_api_grupo). */
 export class GrupoRepository extends CrudRepository {
   constructor(db) {
     const editables = ['docente_id', 'aula_id', 'cupo_min', 'cupo_max', 'estado', 'dia1', 'dia2'];

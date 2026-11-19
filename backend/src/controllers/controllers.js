@@ -1,8 +1,6 @@
 import { COOKIE_SESION } from '../middlewares/auth.js';
 
-// Los controladores solo traducen HTTP <-> servicio. No contienen reglas ni SQL.
-// Con Express 5, si una función async falla, el error llega solo al manejador central.
-
+/** Controlador HTTP de un CRUD. */
 export const crudController = (servicio) => ({
   listar: async (req, res) => res.json(await servicio.listar(req.valid.query)),
   obtener: async (req, res) => res.json(await servicio.obtener(req.valid.params.id)),
@@ -14,10 +12,8 @@ export const crudController = (servicio) => ({
   },
 });
 
+/** Controlador de inicio de sesión, cierre de sesión y usuario actual. */
 export const authController = (authService, { minutos, segura }) => {
-  // Desde el frontend local la cookie es SameSite=Strict. Desde el frontend publicado (otro sitio)
-  // el navegador solo la acepta con SameSite=None y Secure; ahí la protección CSRF la da la
-  // verificación de origen de app.js, que solo deja pasar los orígenes de FRONTEND_ORIGIN.
   const opcionesCookie = (req) => {
     const otroSitio = !/^http:\/\/localhost(:\d+)?$/.test(req.get('origin') ?? 'http://localhost');
     return { httpOnly: true, path: '/api', sameSite: otroSitio ? 'none' : 'strict', secure: otroSitio || segura };
@@ -36,10 +32,12 @@ export const authController = (authService, { minutos, segura }) => {
   };
 };
 
+/** Controlador de las listas desplegables. */
 export const catalogoController = (catalogoRepository) => ({
   listar: async (req, res) => res.json(await catalogoRepository.listar(req.valid.params.nombre)),
 });
 
+/** Controlador de matrículas: listado, detalle, matrícula y retiro. */
 export const matriculaController = (servicio) => ({
   listar: async (req, res) => res.json(await servicio.listar(req.valid.query)),
   detalle: async (req, res) => res.json(await servicio.detalle(req.valid.params.id)),
@@ -47,6 +45,7 @@ export const matriculaController = (servicio) => ({
   retirar: async (req, res) => res.json(await servicio.retirar(req.valid.params.id, req.valid.body.observacion)),
 });
 
+/** Controlador de recibos de caja: listado, registro y anulación. */
 export const pagoController = (servicio) => ({
   listar: async (req, res) => res.json(await servicio.listar(req.valid.query)),
   registrar: async (req, res) => res.status(201).json(await servicio.registrar(req.valid.body, req.usuario)),
@@ -56,11 +55,13 @@ export const pagoController = (servicio) => ({
   },
 });
 
+/** Controlador del tablero y la cartera. */
 export const reporteController = (servicio) => ({
   tablero: async (_req, res) => res.json(await servicio.tablero()),
   cartera: async (req, res) => res.json(await servicio.cartera(req.valid.query)),
 });
 
+/** Controlador del diccionario de datos. */
 export const diccionarioController = (servicio) => ({
   tablas: async (_req, res) => res.json(await servicio.tablas()),
   columnas: async (req, res) => res.json(await servicio.columnas(req.valid.params.tabla)),

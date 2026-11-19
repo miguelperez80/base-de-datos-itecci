@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
 
-// Firma y verificación del token de sesión (HS256, con expiración)
+/** Firma y verifica el token de sesión (JWT HS256 con expiración). */
 export class TokenService {
   constructor({ secreto, minutos }) {
     this.secreto = secreto;
@@ -24,17 +24,17 @@ export class TokenService {
   }
 }
 
-// Hash de comparación para cuando el usuario no existe: el tiempo de respuesta es el mismo
-// y no se revela si el nombre de usuario es válido.
 const HASH_SENUELO = bcrypt.hashSync('usuario-inexistente', 12);
 const CREDENCIALES_INVALIDAS = 'Usuario o contraseña incorrectos';
 
+/** Inicio de sesión con contraseña bcrypt. */
 export class AuthService {
   constructor(usuarioRepository, tokenService) {
     this.usuarios = usuarioRepository;
     this.tokens = tokenService;
   }
 
+  /** Valida usuario y contraseña y retorna el usuario con su token. */
   async iniciarSesion({ username, password }, ip) {
     const usuario = await this.usuarios.buscarPorUsername(username);
     const hash = usuario?.password_hash?.startsWith('$2') ? usuario.password_hash : HASH_SENUELO;

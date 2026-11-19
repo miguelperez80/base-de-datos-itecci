@@ -8,10 +8,7 @@ import { Buscador, Cabecera, Paginacion, Tabla } from './Tabla.jsx';
 import Formulario from './Formulario.jsx';
 import Modal, { Confirmacion } from './Modal.jsx';
 
-/**
- * Pantalla CRUD completa (listar, buscar, crear, editar, eliminar) a partir de una definición.
- * Cada entidad solo declara sus columnas y campos; el comportamiento es el mismo para todas.
- */
+/** Pantalla para listar, buscar, crear, editar y eliminar registros a partir de sus columnas y campos. */
 export default function CrudPage({
   titulo, descripcion, recurso, singular, columnas, campos, inicial,
   escriben, eliminan = ['COORDINADOR'], describir = (f) => f.nombre, textoBuscar,
@@ -19,7 +16,7 @@ export default function CrudPage({
   const { tieneRol } = useAuth();
   const avisos = useAvisos();
   const lista = useListado(`/${recurso}`);
-  const [formulario, setFormulario] = useState(null); // { id, valores }
+  const [formulario, setFormulario] = useState(null);
   const [porEliminar, setPorEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
   const [catalogos, setCatalogos] = useState({});
@@ -27,14 +24,12 @@ export default function CrudPage({
   const puedeEscribir = tieneRol(escriben);
   const puedeEliminar = tieneRol(eliminan);
 
-  // Listas desplegables que vienen de la base de datos
   useEffect(() => {
     if (!puedeEscribir) return;
     const nombres = [...new Set(campos.filter((c) => c.catalogo).map((c) => c.catalogo))];
     Promise.all(nombres.map((n) => api.get(`/catalogos/${n}`).then((filas) => [n, filas.map((f) => ({ valor: f.id, texto: f.nombre }))])))
       .then((pares) => setCatalogos(Object.fromEntries(pares)))
       .catch((e) => avisos.error(e.message));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recurso, puedeEscribir]);
 
   const abrirEdicion = async (fila) => {

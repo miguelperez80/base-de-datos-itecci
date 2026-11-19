@@ -4,7 +4,7 @@ import { CircleAlert, CircleCheck } from 'lucide-react';
 const AvisosContext = createContext(null);
 let consecutivo = 0;
 
-// Mensajes breves de confirmación o error en la esquina inferior derecha
+/** Avisos breves de confirmación o error. */
 export function AvisosProvider({ children }) {
   const [avisos, setAvisos] = useState([]);
 

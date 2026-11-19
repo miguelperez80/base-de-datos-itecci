@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Mensajes de validación en español
 z.setErrorMap((issue, ctx) => {
   switch (issue.code) {
     case z.ZodIssueCode.invalid_type:
@@ -18,7 +17,6 @@ z.setErrorMap((issue, ctx) => {
   }
 });
 
-// ---------- Piezas reutilizables ----------
 const texto = (min, max) => z.string().trim().min(min).max(max);
 const opcional = (max) =>
   z.union([z.string().trim().max(max), z.null(), z.undefined()]).transform((v) => (v ? v : null));
@@ -26,7 +24,6 @@ const nombrePropio = (max) =>
   texto(2, max).regex(/^[\p{L}][\p{L} .'-]*$/u, 'Solo se admiten letras, espacios, puntos, apóstrofos y guiones');
 const documento = z.string().trim().regex(/^[0-9]{6,10}$/, 'Debe tener entre 6 y 10 dígitos, sin puntos ni espacios');
 const email = z.string().trim().toLowerCase().max(120).regex(/^[a-z0-9._-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$/, 'El correo electrónico no es válido');
-// Celular colombiano (misma regla de TRG_ESTUDIANTE_FORMATO): se quitan espacios y guiones antes de validar
 const celular = z.string().transform((v) => v.replace(/[^0-9]/g, '')).pipe(z.string().regex(/^3[0-9]{9}$/, 'Debe ser un celular de 10 dígitos que inicie en 3'));
 const telefono = z.string().trim().regex(/^[0-9+ ()-]{7,20}$/, 'Entre 7 y 20 caracteres: dígitos, espacios y + ( ) -');
 const fecha = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use el formato AAAA-MM-DD')
@@ -35,6 +32,7 @@ const entero = (min, max) => z.coerce.number().int('Debe ser un número entero')
 const id = entero(1, 9_999_999);
 const bandera = z.union([z.boolean(), z.literal(0), z.literal(1)]).transform((v) => (v ? 1 : 0));
 
+/** Esquemas de validación de la API. */
 export const idParam = z.object({ id });
 
 export const listaQuery = z.object({
@@ -44,13 +42,11 @@ export const listaQuery = z.object({
   estado: z.string().trim().max(20).optional().transform((v) => v || null),
 });
 
-// ---------- Autenticación ----------
 export const loginBody = z.object({
   username: z.string().trim().toLowerCase().min(3).max(40).regex(/^[a-z0-9._-]+$/, 'Usuario no válido'),
   password: z.string().min(1).max(72),
 }).strict();
 
-// ---------- Estudiante ----------
 export const estudianteBody = z.object({
   tipo_documento: z.enum(['CC', 'TI', 'CE', 'PPT']),
   cedula: documento,
@@ -72,7 +68,6 @@ export const estudianteBody = z.object({
   doc_foto: bandera,
 }).strict();
 
-// ---------- Docente ----------
 export const docenteBody = z.object({
   cedula: documento,
   nombres: nombrePropio(80),
@@ -84,23 +79,19 @@ export const docenteBody = z.object({
   activo: bandera,
 }).strict();
 
-// ---------- Contrato por hora cátedra ----------
 const contratoEditable = {
   horas_catedra: entero(1, 1000),
   valor_hora: z.coerce.number().int('El valor por hora no lleva decimales').min(1000, 'El valor mínimo por hora es $1.000').max(1_000_000),
 };
 export const contratoCrearBody = z.object({ docente_id: id, periodo_id: id, ...contratoEditable }).strict();
-// Docente y periodo no cambian después de crear el contrato (el formulario los envía, se ignoran)
 export const contratoEditarBody = z.object({ docente_id: id.optional(), periodo_id: id.optional(), ...contratoEditable }).strict();
 
-// ---------- Programa técnico ----------
 export const tecnicoBody = z.object({
   codigo: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/, 'Entre 2 y 10 letras o números, sin espacios'),
   nombre: texto(5, 80),
   activo: bandera,
 }).strict();
 
-// ---------- Grupo ----------
 const ESTADOS_GRUPO = ['En formación', 'Activo', 'Cerrado', 'Cancelado'];
 const grupoEditable = {
   docente_id: id,
@@ -117,11 +108,9 @@ const reglasGrupo = (g, ctx) => {
 };
 export const grupoCrearBody = z.object({ tecnico_id: id, periodo_id: id, semestre: entero(1, 2), ...grupoEditable })
   .strict().superRefine(reglasGrupo);
-// Programa, periodo y semestre no cambian después de crear el grupo (el formulario los envía, se ignoran)
 export const grupoEditarBody = z.object({ tecnico_id: id.optional(), periodo_id: id.optional(), semestre: entero(1, 2).optional(), ...grupoEditable })
   .strict().superRefine(reglasGrupo);
 
-// ---------- Matrícula y pagos ----------
 export const matriculaBody = z.object({ estudiante_id: id, grupo_id: id }).strict();
 export const retiroBody = z.object({ observacion: texto(5, 300) }).strict();
 
@@ -133,7 +122,6 @@ export const pagoBody = z.object({
 }).strict();
 export const anulacionBody = z.object({ motivo: texto(5, 300) }).strict();
 
-// ---------- Diccionario de datos ----------
 export const tablaParam = z.object({
   tabla: z.string().trim().toUpperCase().regex(/^[A-Z][A-Z0-9_$#]{0,29}$/, 'Nombre de tabla no válido'),
 });

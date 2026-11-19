@@ -1,8 +1,8 @@
-// Cliente HTTP de la API. Es el único módulo que conoce la URL del backend y usa fetch.
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
 
 export const EVENTO_SESION_EXPIRADA = 'itecci:sesion-expirada';
 
+/** Error devuelto por la API. */
 export class ApiError extends Error {
   constructor(status, cuerpo) {
     super(cuerpo?.mensaje ?? 'Ocurrió un error inesperado');
@@ -13,18 +13,18 @@ export class ApiError extends Error {
     this.referencia = cuerpo?.referencia;
   }
 
-  // { campo: mensaje } para pintar los errores junto a cada campo del formulario
   get porCampo() {
     return Object.fromEntries(this.detalles.filter((d) => d.campo).map((d) => [d.campo, d.mensaje]));
   }
 }
 
+/** Envía una petición a la API con la cookie de sesión y retorna el JSON de respuesta. */
 async function pedir(metodo, ruta, cuerpo) {
   let respuesta;
   try {
     respuesta = await fetch(BASE + ruta, {
       method: metodo,
-      credentials: 'include', // la sesión viaja en una cookie httpOnly: JavaScript nunca ve el token
+      credentials: 'include',
       headers: cuerpo ? { 'Content-Type': 'application/json' } : undefined,
       body: cuerpo ? JSON.stringify(cuerpo) : undefined,
     });
@@ -48,6 +48,7 @@ const conConsulta = (ruta, consulta) => {
   return limpia.length ? `${ruta}?${new URLSearchParams(limpia)}` : ruta;
 };
 
+/** Cliente de la API. */
 export const api = {
   get: (ruta, consulta) => pedir('GET', conConsulta(ruta, consulta)),
   post: (ruta, cuerpo) => pedir('POST', ruta, cuerpo ?? {}),

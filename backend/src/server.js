@@ -4,6 +4,7 @@ import { crearContenedor } from './container.js';
 import { crearApp } from './app.js';
 import { logger } from './utils/logger.js';
 
+/** Abre el pool de Oracle e inicia el servidor HTTP. */
 async function iniciar() {
   try {
     await iniciarPool();

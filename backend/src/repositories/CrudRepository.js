@@ -1,13 +1,12 @@
 import { OracleRepository, salida, tomar, parametros } from './OracleRepository.js';
 
 /**
- * Repositorio CRUD sobre un paquete PL/SQL con la forma estándar del proyecto:
- *   insertar(..., p_id OUT) · actualizar(p_id, ...) · eliminar(p_id) · obtener(p_id) · listar(...)
- * Cada entidad solo declara su paquete y sus campos (abierto a extensión, cerrado a modificación).
+ * Repositorio CRUD sobre un paquete PL/SQL con los procedimientos
+ * insertar, actualizar, eliminar, obtener y listar.
  */
 export class CrudRepository extends OracleRepository {
   /**
-   * @param db conexión inyectada
+   * @param db conexión a la base de datos
    * @param {{ paquete: string, camposCrear: string[], camposEditar?: string[] }} definicion
    */
   constructor(db, { paquete, camposCrear, camposEditar }) {
@@ -17,14 +16,17 @@ export class CrudRepository extends OracleRepository {
     this.camposEditar = camposEditar ?? camposCrear;
   }
 
+  /** Lista una página de registros. */
   listar(filtro) {
     return this.pagina(`${this.paquete}.listar`, filtro);
   }
 
+  /** Retorna un registro o null. */
   obtener(id) {
     return this.fila(`${this.paquete}.obtener(:id)`, { id });
   }
 
+  /** Inserta un registro y retorna su id. */
   async crear(datos) {
     const { id } = await this.llamar(
       `BEGIN ${this.paquete}.insertar(${parametros(this.camposCrear)}, p_id => :id); END;`,
@@ -33,6 +35,7 @@ export class CrudRepository extends OracleRepository {
     return id;
   }
 
+  /** Actualiza un registro. */
   async actualizar(id, datos) {
     await this.llamar(
       `BEGIN ${this.paquete}.actualizar(p_id => :id, ${parametros(this.camposEditar)}); END;`,
@@ -40,6 +43,7 @@ export class CrudRepository extends OracleRepository {
     );
   }
 
+  /** Elimina un registro. */
   async eliminar(id) {
     await this.llamar(`BEGIN ${this.paquete}.eliminar(:id); END;`, { id });
   }

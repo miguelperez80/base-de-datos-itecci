@@ -30,7 +30,7 @@ BEGIN
                                   'MATRICULA','MEDIO_PAGO','CUOTA','PAGO','APLICACION_PAGO','SESION_CLASE',
                                   'ASISTENCIA','CALIFICACION','DIPLOMA','AUDITORIA')) LOOP
     BEGIN
-      EXECUTE IMMEDIATE 'DROP TABLE "' || t.table_name || '" CASCADE CONSTRAINTS PURGE';   -- PURGE: no deja copias en la papelera (BIN$...)
+      EXECUTE IMMEDIATE 'DROP TABLE "' || t.table_name || '" CASCADE CONSTRAINTS PURGE';
     EXCEPTION WHEN OTHERS THEN
       DBMS_OUTPUT.PUT_LINE('No se pudo borrar tabla ' || t.table_name || ': ' || SQLERRM);
     END;
@@ -502,7 +502,9 @@ END sp_generar_plan_pagos;
 /
 
 -- ---------------------------------------------------------------------
--- Matricula a un estudiante aplicando las reglas del negocio y genera su plan de pagos
+-- Matricula a un estudiante y genera su plan de pagos. Valida documentos requisito (cédula y diploma
+-- de bachiller), cupo máximo, que no repita el técnico en el periodo, que para el II semestre tenga
+-- aprobadas las 4 competencias del I y que no esté en mora.
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE sp_matricular (
     p_estudiante IN NUMBER, p_grupo IN NUMBER, p_usuario IN NUMBER, p_fecha IN DATE DEFAULT TRUNC(SYSDATE)
@@ -517,20 +519,17 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20001, 'El grupo ' || v_grupo.codigo || ' no admite matrículas (' || v_grupo.estado || ')');
     END IF;
 
-    -- Documentos requisito: cédula y diploma de bachiller
     SELECT COUNT(*) INTO v_n FROM documento_estudiante
      WHERE estudiante_id = p_estudiante AND tipo IN ('Cédula', 'Diploma de bachiller');
     IF v_n < 2 THEN
         RAISE_APPLICATION_ERROR(-20002, 'Faltan documentos requisito (cédula y diploma de bachiller)');
     END IF;
 
-    -- Cupo máximo
     SELECT COUNT(*) INTO v_n FROM matricula WHERE grupo_id = p_grupo AND estado <> 'Retirada';
     IF v_n >= v_grupo.cupo_max THEN
         RAISE_APPLICATION_ERROR(-20003, 'El grupo alcanzó el cupo máximo (' || v_grupo.cupo_max || ')');
     END IF;
 
-    -- Puede cursar dos técnicos a la vez, pero no el mismo técnico dos veces en el periodo
     SELECT COUNT(*) INTO v_n FROM matricula m JOIN grupo g ON g.id = m.grupo_id
      WHERE m.estudiante_id = p_estudiante AND g.tecnico_id = v_grupo.tecnico_id
        AND g.periodo_id = v_grupo.periodo_id AND m.estado <> 'Retirada';
@@ -538,7 +537,6 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20004, 'El estudiante ya está matriculado en este técnico en el mismo periodo');
     END IF;
 
-    -- Prerrequisito: para el II semestre deben estar aprobadas las 4 competencias del I
     IF v_grupo.semestre = 2 THEN
         SELECT COUNT(*) INTO v_n FROM competencia c
          WHERE c.tecnico_id = v_grupo.tecnico_id AND c.semestre = 1
@@ -549,7 +547,6 @@ BEGIN
         END IF;
     END IF;
 
-    -- En mora no se continúa
     SELECT COUNT(*) INTO v_n FROM v_estado_credito WHERE estudiante_id = p_estudiante AND estado = 'En mora';
     IF v_n > 0 THEN
         RAISE_APPLICATION_ERROR(-20006, 'El estudiante está en mora; debe ponerse al día para matricularse');
@@ -600,11 +597,6 @@ BEGIN
     END LOOP;
 END sp_registrar_pago;
 /
-
--- Prueba rápida (deshacer con ROLLBACK):
--- EXEC sp_registrar_pago(<matricula con saldo>, '99990', 50000, 1, 2);
--- SELECT * FROM aplicacion_pago WHERE pago_id = (SELECT MAX(id) FROM pago);
--- ROLLBACK;
 
 -- #####################################################################
 -- 4. AVANCE PL/SQL: AUDITORÍA, ÍNDICES, SECUENCIAS, VISTA, PAQUETES Y TRIGGERS
@@ -758,7 +750,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_util AS
       FROM asistencia WHERE matricula_id = p_matricula;
     RETURN ROUND(v_asist * 100 / v_total, 1);
   EXCEPTION
-    WHEN ZERO_DIVIDE THEN          -- sin sesiones registradas
+    WHEN ZERO_DIVIDE THEN
       RETURN NULL;
   END fn_pct_asistencia;
 
@@ -768,7 +760,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_util AS
     SELECT saldo INTO v_saldo FROM v_estado_credito WHERE matricula_id = p_matricula;
     RETURN v_saldo;
   EXCEPTION
-    WHEN NO_DATA_FOUND THEN        -- matrícula sin plan de pagos
+    WHEN NO_DATA_FOUND THEN
       RETURN 0;
   END fn_saldo;
 
@@ -822,6 +814,7 @@ END pkg_util;
 --   * email: formato usuario@dominio, se guarda en minúscula
 --   * nombres y apellidos: sin espacios dobles y con mayúscula inicial
 --   * CC exige mayoría de edad (18 años); TI es para menores
+--   * si autoriza consulta en centrales de información, la fecha se toma automáticamente (RN-27)
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE TRIGGER trg_estudiante_formato
 BEFORE INSERT OR UPDATE ON estudiante
@@ -857,7 +850,6 @@ BEGIN
       NULL;
   END CASE;
 
-  -- RN-27: si autoriza centrales de información, la fecha se toma automáticamente
   IF :NEW.autoriza_centrales = 1 AND :NEW.fecha_autorizacion IS NULL THEN
     :NEW.fecha_autorizacion := TRUNC(SYSDATE);
   ELSIF :NEW.autoriza_centrales = 0 THEN
@@ -1122,8 +1114,8 @@ END pkg_estudiante;
 /
 
 CREATE OR REPLACE PACKAGE BODY pkg_estudiante AS
-  e_check     EXCEPTION;  PRAGMA EXCEPTION_INIT(e_check, -2290);   -- violación de CHECK
-  e_hijos     EXCEPTION;  PRAGMA EXCEPTION_INIT(e_hijos, -2292);   -- tiene registros hijos
+  e_check     EXCEPTION;  PRAGMA EXCEPTION_INIT(e_check, -2290);
+  e_hijos     EXCEPTION;  PRAGMA EXCEPTION_INIT(e_hijos, -2292);
   e_no_existe EXCEPTION;
 
   PROCEDURE insertar (
@@ -1188,7 +1180,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_estudiante AS
   END registrar_documento;
 
   FUNCTION consultar (p_cedula VARCHAR2) RETURN estudiante%ROWTYPE IS
-    v_est estudiante%ROWTYPE;                                -- tipo compuesto %ROWTYPE
+    v_est estudiante%ROWTYPE;
   BEGIN
     SELECT * INTO v_est FROM estudiante WHERE cedula = TRIM(p_cedula);
     RETURN v_est;
@@ -1211,7 +1203,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_estudiante AS
 
   PROCEDURE imprimir_ficha (p_cedula VARCHAR2) IS
     v_est estudiante%ROWTYPE;
-    CURSOR c_matriculas (p_estudiante NUMBER) IS             -- cursor con parámetro
+    CURSOR c_matriculas (p_estudiante NUMBER) IS
       SELECT m.id, g.codigo, p.codigo AS periodo, m.estado
         FROM matricula m JOIN grupo g ON g.id = m.grupo_id JOIN periodo p ON p.id = g.periodo_id
        WHERE m.estudiante_id = p_estudiante
@@ -1231,7 +1223,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_estudiante AS
 
   PROCEDURE eliminar (p_id NUMBER) IS
   BEGIN
-    DELETE FROM estudiante WHERE id = p_id;      -- sus documentos se borran en cascada
+    DELETE FROM estudiante WHERE id = p_id;
     IF SQL%ROWCOUNT = 0 THEN
       RAISE e_no_existe;
     END IF;
@@ -1249,12 +1241,12 @@ END pkg_estudiante;
 -- 5.2 PKG_DOCENTE: insertar, actualizar, consultar (con RECORD + TABLE + BULK COLLECT), eliminar
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE PACKAGE pkg_docente AS
-  TYPE t_contrato IS RECORD (                                -- (f) RECORD
-    periodo     VARCHAR2(7),             -- mismo tipo de periodo.codigo (con %TYPE el campo "periodo" oculta a la tabla: PLS-00320)
+  TYPE t_contrato IS RECORD (
+    periodo     VARCHAR2(7),
     horas       contrato_docente.horas_catedra%TYPE,
     valor_hora  contrato_docente.valor_hora%TYPE,
     total       NUMBER);
-  TYPE t_tab_contratos IS TABLE OF t_contrato INDEX BY PLS_INTEGER;   -- (f) TABLE (asociativa)
+  TYPE t_tab_contratos IS TABLE OF t_contrato INDEX BY PLS_INTEGER;
 
   PROCEDURE insertar (p_cedula VARCHAR2, p_nombres VARCHAR2, p_apellidos VARCHAR2, p_email VARCHAR2,
                       p_telefono VARCHAR2, p_nivel VARCHAR2, p_exp NUMBER, p_hoja_vida VARCHAR2,
@@ -1272,7 +1264,7 @@ END pkg_docente;
 CREATE OR REPLACE PACKAGE BODY pkg_docente AS
   e_check     EXCEPTION;  PRAGMA EXCEPTION_INIT(e_check, -2290);
   e_hijos     EXCEPTION;  PRAGMA EXCEPTION_INIT(e_hijos, -2292);
-  e_padre     EXCEPTION;  PRAGMA EXCEPTION_INIT(e_padre, -2291);   -- llave foránea inexistente
+  e_padre     EXCEPTION;  PRAGMA EXCEPTION_INIT(e_padre, -2291);
   e_no_existe EXCEPTION;
 
   PROCEDURE insertar (p_cedula VARCHAR2, p_nombres VARCHAR2, p_apellidos VARCHAR2, p_email VARCHAR2,
@@ -1287,7 +1279,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_docente AS
   EXCEPTION
     WHEN DUP_VAL_ON_INDEX THEN
       RAISE_APPLICATION_ERROR(-20210, 'Ya existe un docente con esa cédula o correo');
-    WHEN e_check THEN      -- RN-11: mínimo pregrado y 1 año de experiencia docente
+    WHEN e_check THEN
       RAISE_APPLICATION_ERROR(-20211, 'El docente no cumple el perfil (mínimo pregrado y experiencia docente)');
   END insertar;
 
@@ -1396,7 +1388,7 @@ END pkg_docente;
 -- 5.3 PKG_GRUPO: crear (grupo + horario), cambiar estado, consultar, eliminar
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE PACKAGE pkg_grupo AS
-  TYPE t_dias IS VARRAY(2) OF NUMBER(1);                     -- colección de tamaño fijo: 2 días
+  TYPE t_dias IS VARRAY(2) OF NUMBER(1);
 
   PROCEDURE crear (p_tecnico NUMBER, p_periodo NUMBER, p_semestre NUMBER, p_docente NUMBER,
                    p_aula NUMBER, p_dia1 NUMBER, p_dia2 NUMBER, p_id OUT NUMBER);
@@ -1409,6 +1401,8 @@ END pkg_grupo;
 CREATE OR REPLACE PACKAGE BODY pkg_grupo AS
   e_hijos EXCEPTION;  PRAGMA EXCEPTION_INIT(e_hijos, -2292);
 
+  -- Crea el grupo y su horario. El docente debe tener contrato en el periodo (RN-12) y ni el aula
+  -- ni el docente pueden tener otro grupo esos días (RN-08).
   PROCEDURE crear (p_tecnico NUMBER, p_periodo NUMBER, p_semestre NUMBER, p_docente NUMBER,
                    p_aula NUMBER, p_dia1 NUMBER, p_dia2 NUMBER, p_id OUT NUMBER) IS
     v_dias    t_dias := t_dias(p_dia1, p_dia2);
@@ -1425,13 +1419,11 @@ CREATE OR REPLACE PACKAGE BODY pkg_grupo AS
     SELECT codigo INTO v_tec FROM tecnico WHERE id = p_tecnico;
     SELECT codigo INTO v_per FROM periodo WHERE id = p_periodo;
 
-    -- RN-12: el docente debe tener contrato por hora cátedra en el periodo
     SELECT COUNT(*) INTO v_n FROM contrato_docente WHERE docente_id = p_docente AND periodo_id = p_periodo;
     IF v_n = 0 THEN
       RAISE_APPLICATION_ERROR(-20222, 'El docente ' || p_docente || ' no tiene contrato en el periodo ' || v_per);
     END IF;
 
-    -- RN-08: aula libre esos días; el docente tampoco puede dictar otro grupo esos días (única jornada)
     SELECT COUNT(*) INTO v_n
       FROM horario_grupo h JOIN grupo g ON g.id = h.grupo_id
      WHERE g.aula_id = p_aula AND g.periodo_id = p_periodo AND g.estado <> 'Cancelado'
@@ -1542,7 +1534,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_grupo AS
     IF v_estado <> 'En formación' THEN
       RAISE_APPLICATION_ERROR(-20230, 'Solo se elimina un grupo en formación; use cambiar_estado(''Cancelado'')');
     END IF;
-    DELETE FROM grupo WHERE id = p_id;           -- el horario se borra en cascada
+    DELETE FROM grupo WHERE id = p_id;
     pkg_util.pl('Grupo ' || p_id || ' eliminado');
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
@@ -1573,6 +1565,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_calificacion AS
   e_prerrequisito EXCEPTION;
   e_no_existe     EXCEPTION;
 
+  -- Registra una nota. Para calificar la competencia n del semestre exige aprobada la n-1 (RN-04).
   PROCEDURE registrar (p_matricula NUMBER, p_competencia NUMBER, p_nota NUMBER, p_id OUT NUMBER,
                        p_tipo VARCHAR2 DEFAULT 'Ordinaria', p_usuario NUMBER DEFAULT NULL,
                        p_fecha DATE DEFAULT TRUNC(SYSDATE)) IS
@@ -1588,8 +1581,6 @@ CREATE OR REPLACE PACKAGE BODY pkg_calificacion AS
     SELECT orden, tecnico_id INTO v_orden, v_tecnico FROM competencia WHERE id = p_competencia;
     SELECT estudiante_id INTO v_estud FROM matricula WHERE id = p_matricula;
 
-    -- RN-04: dentro del semestre, para calificar la competencia n se debe haber aprobado la n-1
-    -- (las competencias 1 y 5 abren semestre; la 5 ya la controla sp_matricular)
     IF p_tipo = 'Ordinaria' AND MOD(v_orden - 1, 4) <> 0 THEN
       SELECT COUNT(*) INTO v_n
         FROM calificacion k JOIN matricula m ON m.id = k.matricula_id
@@ -1682,7 +1673,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_calificacion AS
 
   PROCEDURE eliminar (p_id NUMBER) IS
   BEGIN
-    DELETE FROM calificacion WHERE id = p_id;    -- TRG_CALIFICACION_SUPLETORIO impide dejar supletorios huérfanos
+    DELETE FROM calificacion WHERE id = p_id;
     IF SQL%ROWCOUNT = 0 THEN
       RAISE e_no_existe;
     END IF;
@@ -2518,7 +2509,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_api_pago AS
             WHEN NO_DATA_FOUND THEN
                 RAISE_APPLICATION_ERROR(-20404, 'La matrícula no existe');
         END;
-        p_recibo := pkg_util.fn_siguiente_recibo;   -- consecutivo sin saltos (SEQ_RECIBO, sección 4)
+        p_recibo := pkg_util.fn_siguiente_recibo;
         sp_registrar_pago(p_matricula_id, p_recibo, p_valor, p_medio_pago_id, p_usuario_id);
         SELECT id INTO p_id FROM pago WHERE numero_recibo = p_recibo;
         IF p_referencia IS NOT NULL THEN

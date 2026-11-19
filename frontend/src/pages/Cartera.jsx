@@ -9,7 +9,7 @@ const ESTADOS = [
   { valor: 'Paz y salvo', texto: 'Paz y salvo' }, { valor: null, texto: 'Todas' },
 ];
 
-// Reporte de estado de crédito (vista v_estado_credito), ordenado de mayor a menor mora.
+/** Reporte de cartera: estado de crédito de cada matrícula. */
 export default function Cartera() {
   const [estado, setEstado] = useState('En mora');
   const lista = useListado('/reportes/cartera', { estado });

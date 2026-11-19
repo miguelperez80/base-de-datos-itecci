@@ -3,10 +3,7 @@ import { api } from '../api/http.js';
 
 const VACIO = { datos: [], total: 0, pagina: 1, paginas: 1 };
 
-/**
- * Listado paginado con búsqueda. La búsqueda espera 300 ms después de la última tecla
- * para no consultar al servidor en cada pulsación.
- */
+/** Carga un listado paginado de la API con búsqueda (se consulta 300 ms después de la última tecla). */
 export function useListado(ruta, { porPagina = 10, estado = null } = {}) {
   const [busqueda, setBusqueda] = useState('');
   const [q, setQ] = useState('');

@@ -1,6 +1,7 @@
 import { AppError } from '../utils/AppError.js';
 import { aFiltro, aPagina } from './CrudService.js';
 
+/** Matrículas: listado, detalle con plan de pagos, matrícula y retiro. */
 export class MatriculaService {
   constructor(matriculaRepository) {
     this.matriculas = matriculaRepository;
@@ -10,7 +11,6 @@ export class MatriculaService {
     return aPagina(await this.matriculas.listar(aFiltro(consulta)), consulta);
   }
 
-  // Cabecera + plan de pagos + recibos de una matrícula
   async detalle(id) {
     const [matricula, cuotas, pagos] = await Promise.all([
       this.matriculas.obtener(id), this.matriculas.cuotas(id), this.matriculas.pagos(id),
@@ -30,6 +30,7 @@ export class MatriculaService {
   }
 }
 
+/** Recibos de caja: listado, registro y anulación. */
 export class PagoService {
   constructor(pagoRepository) {
     this.pagos = pagoRepository;
@@ -48,6 +49,7 @@ export class PagoService {
   }
 }
 
+/** Tablero de indicadores y reporte de cartera. */
 export class ReporteService {
   constructor(reporteRepository) {
     this.reportes = reporteRepository;
@@ -66,6 +68,7 @@ export class ReporteService {
   }
 }
 
+/** Consulta del diccionario de datos. */
 export class DiccionarioService {
   constructor(diccionarioRepository) {
     this.diccionario = diccionarioRepository;
