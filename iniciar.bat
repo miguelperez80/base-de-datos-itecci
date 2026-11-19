@@ -1,10 +1,4 @@
 @echo off
-rem ====================================================================
-rem  ITECCI - inicia la aplicacion completa en este equipo
-rem    1. Verifica que el listener de Oracle este encendido
-rem    2. Abre el backend  (API REST)   en http://localhost:3000/api
-rem    3. Abre el frontend (React)      en http://localhost:5173
-rem ====================================================================
 setlocal
 cd /d "%~dp0"
 

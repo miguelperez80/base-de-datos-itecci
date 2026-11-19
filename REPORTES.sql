@@ -1,19 +1,3 @@
--- =====================================================================
--- ITECCI - Avance PL/SQL
--- REPORTES.sql : (a) bloques anónimos que funcionan como reportes del negocio
--- Ejecutar como ITECCI después de DDL.sql y DATOS.sql. Cada bloque termina en "/".
---
---   R1  Cartera en mora por grupo de un periodo     cursores con parámetros anidados, IF, CASE, excepción propia
---   R2  Boletín de notas de un estudiante           SELECT INTO + NO_DATA_FOUND/TOO_MANY_ROWS, cursor FOR, CASE
---   R3  Control de asistencia de un grupo           RECORD + TABLE OF + BULK COLLECT, WHILE con FIRST/NEXT
---   R4  Recaudo mensual por medio de pago           LOOP con EXIT WHEN, tabla indexada por VARCHAR2
---   R5  Candidatos a diploma                        cursor explícito OPEN/FETCH/CLOSE, %NOTFOUND, %ROWCOUNT
---   R6  Liquidación de honorarios docentes          FOR numérico, CASE, ZERO_DIVIDE
---   R7  Facturas electrónicas pendientes            cursor FOR, CASE por antigüedad (usa IX_PAGO_FACTURA)
---
---   Los valores en pesos y las fechas se muestran con el formato de PKG_UTIL (regla k).
---   Las fechas de corte dependen de SYSDATE; cambie las variables v_* al inicio de cada bloque.
--- =====================================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET DEFINE OFF
 

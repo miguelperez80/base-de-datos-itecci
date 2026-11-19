@@ -1,9 +1,3 @@
--- =====================================================================
--- ITECCI - Avance PL/SQL
--- DICCIONARIO.sql : (i) revisión del diccionario de datos de Oracle (vistas USER_*)
--- Ejecutar como ITECCI. Se excluyen las tablas internas de la extensión de VS Code (DBTOOLS$...).
--- =====================================================================
-
 -- ---------------------------------------------------------------------
 -- DD1. TABLAS del esquema: columnas, filas, llaves y restricciones de cada una
 -- ---------------------------------------------------------------------

@@ -1,7 +1,3 @@
--- =====================================================================
--- CONSULTAS.sql : consultas SQL de evidencia (Oracle 11g/18c)
--- Ejecutar como ITECCI.  Requiere DDL.sql y DATOS.sql.
--- =====================================================================
 SET LINESIZE 200 PAGESIZE 60
 SET DEFINE OFF
 

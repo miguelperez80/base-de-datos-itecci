@@ -1,10 +1,3 @@
--- =====================================================================
--- ITECCI - Avance PL/SQL
--- PRUEBAS.sql : evidencia de excepciones (d), triggers (g), formato (k) y paquetes CRUD (b)
--- Ejecutar como ITECCI después de DDL.sql y DATOS.sql.
--- Cada prueba termina en ROLLBACK: la base de datos queda igual (solo avanzan las secuencias).
--- Resultado esperado: cada prueba de error imprime "OK -> ORA-20xxx: ..." con el mensaje de la regla.
--- =====================================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET DEFINE OFF
 

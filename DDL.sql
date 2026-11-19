@@ -1,22 +1,3 @@
--- =====================================================================
--- ITECCI - Técnicos Laborales por Competencias (Cámara de Comercio de Ipiales)
--- DDL.sql : definición COMPLETA de la base de datos. Reconstruye todo el esquema desde cero.
---
---   1. Limpieza de los objetos anteriores (si existen)
---   2. 22 tablas con sus restricciones (PK, FK, UNIQUE, CHECK), índices y secuencias
---   3. Vistas y procedimientos almacenados (matrícula, pagos, plan de pagos)
---   4. Avance PL/SQL: tabla AUDITORIA, índices y secuencias justificados, vista,
---      paquetes PKG_* y 7 triggers de reglas de negocio
---   5. Paquetes PKG_API_* de la aplicación web (12) y 3 triggers complementarios
---   6. Permisos de los roles
---
--- Orden de reconstrucción:
---   (una sola vez, como SYSTEM)  USUARIOS.sql      crea el usuario ITECCI y los roles
---   (como ITECCI)                DDL.sql           este archivo
---   (como ITECCI)                DATOS.sql         datos de prueba
---
--- Compatible con Oracle 12.2 o superior (la paginación de los paquetes PKG_API_* usa OFFSET/FETCH).
--- =====================================================================
 SET DEFINE OFF
 SET SERVEROUTPUT ON SIZE UNLIMITED
 

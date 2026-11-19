@@ -1,21 +1,3 @@
--- =====================================================================
--- ITECCI - Técnicos Laborales por Competencias (Cámara de Comercio de Ipiales)
--- DATOS.sql : datos de prueba (sintéticos) para llenar toda la base de datos. Ejecutar DESPUÉS de DDL.sql.
---
---   21 tablas · ≈10.500 registros · 4 periodos (2025-A a 2026-B), 6 programas, 214 estudiantes,
---   350 matrículas con su plan de pagos, 1.149 recibos, asistencia, calificaciones y 14 diplomas.
---
--- Por qué se desactivan los triggers durante la carga:
---   son datos HISTÓRICOS ya consistentes, y los triggers validan operaciones NUEVAS. Varios dependen de
---   la fecha actual o del estado final de la matrícula (por ejemplo, hay 12 notas de estudiantes que
---   se calificaron y DESPUÉS se retiraron, y los diplomas exigen "sin mora" a la fecha de hoy). Además,
---   TRG_AUDITORIA_PAGO llenaría AUDITORIA con la carga inicial. Al final se vuelven a activar.
---   Las restricciones del DDL (PK, FK, UNIQUE, CHECK) sí se aplican a cada INSERT.
---
--- Usuarios de la aplicación (contraseña con hash bcrypt):
---   coordinador / Coord2026#    secretaria / Secre2026#
---
--- =====================================================================
 SET DEFINE OFF
 SET FEEDBACK OFF
 ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';

@@ -1,7 +1,4 @@
-/**
- * Guarda con hash bcrypt la contraseña de los usuarios de la aplicación.
- * Uso: npm run seed:usuarios  ·  npm run seed:usuarios -- <usuario> <clave>
- */
+/** Guarda con hash bcrypt la contraseña de los usuarios de la aplicación. */
 import bcrypt from 'bcryptjs';
 import { iniciarPool, cerrarPool, db } from '../src/config/db.js';
 import { UsuarioRepository } from '../src/repositories/procesos.js';
