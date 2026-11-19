@@ -161,3 +161,41 @@ SELECT estado, COUNT(*) AS matriculas, SUM(saldo) AS saldo_total
   FROM v_estado_credito
  GROUP BY estado
  ORDER BY estado;
+
+-- =====================================================================
+-- F. SUBCONSULTAS
+-- =====================================================================
+
+-- F1. Subconsulta con IN: estudiantes que tienen al menos una matrícula en mora
+SELECT e.cedula, e.apellidos || ' ' || e.nombres AS estudiante, e.telefono
+  FROM estudiante e
+ WHERE e.id IN (SELECT ec.estudiante_id
+                  FROM v_estado_credito ec
+                 WHERE ec.estado = 'En mora')
+ ORDER BY e.apellidos, e.nombres;
+
+-- F2. Subconsulta correlacionada con EXISTS: estudiantes que aprobaron al menos una competencia en supletorio
+SELECT e.cedula, e.apellidos || ' ' || e.nombres AS estudiante
+  FROM estudiante e
+ WHERE EXISTS (SELECT 1
+                 FROM calificacion k
+                 JOIN matricula m ON m.id = k.matricula_id
+                WHERE m.estudiante_id = e.id
+                  AND k.tipo = 'Supletorio'
+                  AND k.nota >= 3)
+ ORDER BY e.apellidos, e.nombres;
+
+-- F3. Subconsulta en el FROM y en el WHERE: grupos cuyo recaudo supera el promedio de recaudo por grupo
+SELECT r.grupo, r.recaudado
+  FROM (SELECT g.codigo AS grupo, SUM(p.valor) AS recaudado
+          FROM pago p
+          JOIN matricula m ON m.id = p.matricula_id
+          JOIN grupo g ON g.id = m.grupo_id
+         WHERE p.anulado = 0
+         GROUP BY g.codigo) r
+ WHERE r.recaudado > (SELECT AVG(SUM(p2.valor))
+                        FROM pago p2
+                        JOIN matricula m2 ON m2.id = p2.matricula_id
+                       WHERE p2.anulado = 0
+                       GROUP BY m2.grupo_id)
+ ORDER BY r.recaudado DESC;
