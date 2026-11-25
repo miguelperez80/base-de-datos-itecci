@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "seed:usuarios": "node scripts/seed-usuarios.js"
+    "seed:usuarios": "node scripts/seed-usuarios.js",
+    "test": "node --test --test-reporter=spec test/owasp.test.js"
   },
   "engines": {
     "node": ">=20"

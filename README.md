@@ -168,9 +168,19 @@ Antes de `REPORTES.sql` y `PRUEBAS.sql` active la salida: `SET SERVEROUTPUT ON` 
 | A03 Inyección | Solo variables de enlace hacia PL/SQL; el único SQL dinámico (`PKG_API_DICCIONARIO.contar_filas`) valida contra `USER_TABLES` y usa `DBMS_ASSERT`; React escapa todo lo que muestra |
 | A04 Diseño inseguro | Reglas del negocio en procedimientos y triggers: no dependen de la interfaz |
 | A05 Configuración | `helmet`, CORS limitado al frontend, cuerpo máximo de 50 kB, sin `X-Powered-By`, respuestas `no-store` |
+| A06 Componentes vulnerables | Dependencias fijadas en `package-lock.json` con hash de integridad; versiones mayores vigentes; revisión con `npm audit` |
 | A07 Autenticación | Máximo 10 intentos fallidos cada 15 minutos por IP; mismo mensaje y mismo tiempo de respuesta si el usuario no existe |
 | CSRF (parte de A01) | Cookie `SameSite=Strict` y verificación de origen en peticiones que modifican datos (CSRF) |
+| A08 Integridad de datos | El token de sesión va firmado (HS256, emisor y vencimiento verificados): uno alterado, sin firma o de otra clave se rechaza |
 | A09 Registro | Se registran inicios de sesión, intentos fallidos y accesos denegados; nunca contraseñas ni tokens |
+| A10 SSRF | El servidor no hace peticiones a URLs; una URL recibida se guarda como texto |
+
+**Pruebas de seguridad:** `backend/test/owasp.test.js` comprueba cada riesgo del OWASP Top 10 (33 pruebas) levantando la API con una base de datos simulada, así que no necesita Oracle:
+
+```
+cd backend
+npm test
+```
 
 **Manejo de errores:** un único manejador (`middlewares/errorHandler.js`) responde siempre `{ error: { codigo, mensaje, detalles } }`. Los `ORA-20xxx` de `RAISE_APPLICATION_ERROR` llegan al usuario como mensaje de regla de negocio (422); las restricciones únicas como 409; lo inesperado como 500 con un número de referencia, sin detalles internos.
 
