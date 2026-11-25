@@ -156,6 +156,7 @@ Antes de `REPORTES.sql` y `PRUEBAS.sql` active la salida: `SET SERVEROUTPUT ON` 
 | Controles de presentación de CRUD | Estudiantes, Docentes, Contratos docentes, Programas y Grupos (`components/CrudPage.jsx`) |
 | Procedimientos almacenados de Oracle | Toda operación pasa por un paquete PL/SQL; el backend no contiene sentencias SQL sobre tablas |
 | Programación de grupos | Al crear o editar un grupo se listan solo los docentes con contrato en el periodo y se muestra la ocupación por día de docentes y aulas (`PKG_API_GRUPO.disponibilidad`) |
+| Calificaciones | Planilla de notas por grupo (estudiantes × competencias) para registrar y corregir notas ordinarias y supletorios, con asistencia y estado de crédito de cada estudiante (`PKG_API_CALIFICACION`, que reutiliza `PKG_CALIFICACION` y los triggers de `CALIFICACION`) |
 | Carga de los docentes | En Docentes, los estudiantes actuales y los días que dicta cada uno; el detalle muestra sus grupos con horario, aula y estudiantes (`PKG_API_DOCENTE.carga`) |
 | Manejo del diccionario de datos | Pantalla "Diccionario de datos" → `PKG_API_DICCIONARIO` (`USER_TABLES`, `USER_TAB_COLUMNS`, `USER_OBJECTS`, `USER_PROCEDURES`…) |
 
@@ -175,7 +176,7 @@ Antes de `REPORTES.sql` y `PRUEBAS.sql` active la salida: `SET SERVEROUTPUT ON` 
 | A09 Registro | Se registran inicios de sesión, intentos fallidos y accesos denegados; nunca contraseñas ni tokens |
 | A10 SSRF | El servidor no hace peticiones a URLs; una URL recibida se guarda como texto |
 
-**Pruebas de seguridad:** `backend/test/owasp.test.js` comprueba cada riesgo del OWASP Top 10 (33 pruebas) levantando la API con una base de datos simulada, así que no necesita Oracle:
+**Pruebas de seguridad:** `backend/test/owasp.test.js` comprueba cada riesgo del OWASP Top 10 (34 pruebas) y `backend/test/calificaciones.test.js` el registro de notas (5 pruebas) levantando la API con una base de datos simulada, así que no necesita Oracle:
 
 ```
 cd backend
@@ -190,5 +191,5 @@ npm test
 
 - La API se conecta con el usuario dueño del esquema (`itecci`). En producción convendría un usuario de servicio con solo `EXECUTE` sobre los paquetes.
 - La cookie de sesión no lleva `Secure` en desarrollo porque `localhost` no usa HTTPS; se activa sola con `NODE_ENV=production`.
-- No hay pantallas para calificaciones, asistencia ni diplomas: se manejan desde SQL con `PKG_CALIFICACION`, `PKG_CERTIFICACION` y los reportes de `REPORTES.sql`.
+- El registro de sesiones y asistencia y la emisión de diplomas no tienen pantalla: se manejan desde SQL (`PKG_CERTIFICACION` y los reportes R3 y R5 de `REPORTES.sql`). La asistencia sí se consulta en la aplicación, en Calificaciones y en el detalle de cada docente.
 - Al anular un recibo desde la aplicación se anula también su factura en el mismo paso, que es lo que exige RN-18.

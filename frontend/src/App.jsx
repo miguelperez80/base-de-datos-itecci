@@ -7,6 +7,7 @@ import { Contratos, Docentes, Estudiantes, Grupos, Programas } from './pages/Cat
 import Matriculas from './pages/Matriculas.jsx';
 import Pagos from './pages/Pagos.jsx';
 import Cartera from './pages/Cartera.jsx';
+import Calificaciones from './pages/Calificaciones.jsx';
 import Diccionario from './pages/Diccionario.jsx';
 import { Mensaje } from './pages/Mensaje.jsx';
 
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="matriculas" element={<Matriculas />} />
           <Route path="pagos" element={<Pagos />} />
           <Route path="cartera" element={<Cartera />} />
+          <Route path="calificaciones" element={<Calificaciones />} />
           <Route path="grupos" element={<Grupos />} />
           <Route path="programas" element={<Programas />} />
           <Route element={<RutaProtegida roles={[ROLES.COORDINADOR]} />}>

@@ -113,3 +113,33 @@ export class DiccionarioRepository extends OracleRepository {
     await this.llamar('BEGIN NULL; END;');
   }
 }
+
+/** Planilla de notas de un grupo y registro, corrección y eliminación de notas (pkg_api_calificacion). */
+export class CalificacionRepository extends OracleRepository {
+  async planilla(grupoId) {
+    const { grupo, competencias, estudiantes, notas } = await this.llamar(
+      'BEGIN pkg_api_calificacion.planilla(:grupo_id, :grupo, :competencias, :estudiantes, :notas); END;',
+      {
+        grupo_id: grupoId, grupo: salida.cursor(), competencias: salida.cursor(),
+        estudiantes: salida.cursor(), notas: salida.cursor(),
+      },
+    );
+    return { grupo: grupo[0] ?? null, competencias, estudiantes, notas };
+  }
+
+  async registrar({ matricula_id, competencia_id, tipo, nota }, usuarioId) {
+    const { id } = await this.llamar(
+      'BEGIN pkg_api_calificacion.registrar(:matricula_id, :competencia_id, :tipo, :nota, :usuario_id, :id); END;',
+      { matricula_id, competencia_id, tipo, nota, usuario_id: usuarioId, id: salida.numero() },
+    );
+    return id;
+  }
+
+  async corregir(id, nota, usuarioId) {
+    await this.llamar('BEGIN pkg_api_calificacion.corregir(:id, :nota, :usuario_id); END;', { id, nota, usuario_id: usuarioId });
+  }
+
+  async eliminar(id) {
+    await this.llamar('BEGIN pkg_api_calificacion.eliminar(:id); END;', { id });
+  }
+}

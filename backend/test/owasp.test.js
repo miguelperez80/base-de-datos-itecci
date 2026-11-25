@@ -39,6 +39,7 @@ describe('A01 Pérdida de control de acceso', () => {
       ['GET', '/api/grupos/disponibilidad?periodo_id=3'],
       ['DELETE', '/api/estudiantes/1'],
       ['POST', '/api/pagos/1/anulacion', { motivo: 'Prueba de anulación' }],
+      ['DELETE', '/api/calificaciones/1'],
     ];
     for (const [metodo, ruta, cuerpo] of intentos) {
       const r = await api.pedir(metodo, ruta, { cookie: secretaria, cuerpo });
@@ -135,6 +136,19 @@ describe('A04 Diseño inseguro', () => {
       });
       assert.equal(r.status, 400, `valor ${valor}`);
     }
+  });
+
+  test('una nota fuera de la escala o con más de un decimal se rechaza aunque se salte el formulario', async () => {
+    for (const nota of [6, 0.5, 3.55, 'cinco', '']) {
+      const r = await api.pedir('POST', '/api/calificaciones', {
+        cookie: secretaria, cuerpo: { matricula_id: 100, competencia_id: 5, tipo: 'Ordinaria', nota },
+      });
+      assert.equal(r.status, 400, `nota ${nota}`);
+    }
+    const tipo = await api.pedir('POST', '/api/calificaciones', {
+      cookie: secretaria, cuerpo: { matricula_id: 100, competencia_id: 5, tipo: 'Habilitación', nota: 4 },
+    });
+    assert.equal(tipo.status, 400);
   });
 
   test('las reglas del negocio las decide Oracle: un pago mayor al saldo se rechaza (422)', async () => {

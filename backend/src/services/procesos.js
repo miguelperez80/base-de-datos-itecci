@@ -122,3 +122,45 @@ export class CargaDocenteService {
     return grupos.map((g) => ({ ...g, estudiantes: estudiantes.filter((e) => e.grupo_id === g.id) }));
   }
 }
+
+/** Planilla de notas: cada estudiante con su nota ordinaria, supletorio y nota definitiva por competencia. */
+export class CalificacionService {
+  constructor(calificacionRepository) {
+    this.repositorio = calificacionRepository;
+  }
+
+  async planilla(grupoId) {
+    const { grupo, competencias, estudiantes, notas } = await this.repositorio.planilla(grupoId);
+    return {
+      grupo,
+      competencias,
+      estudiantes: estudiantes.map((e) => {
+        const propias = notas.filter((n) => n.matricula_id === e.matricula_id);
+        const porCompetencia = Object.fromEntries(competencias.map((c) => {
+          const ordinaria = propias.find((n) => n.competencia_id === c.id && n.tipo === 'Ordinaria') ?? null;
+          const supletorio = propias.find((n) => n.competencia_id === c.id && n.tipo === 'Supletorio') ?? null;
+          return [c.id, { ordinaria, supletorio, definitiva: supletorio?.nota ?? ordinaria?.nota ?? null }];
+        }));
+        const definitivas = Object.values(porCompetencia).map((n) => n.definitiva).filter((n) => n !== null);
+        return {
+          ...e,
+          notas: porCompetencia,
+          aprobadas: definitivas.filter((n) => n >= 3).length,
+          promedio: definitivas.length ? Math.round((definitivas.reduce((a, b) => a + b, 0) / definitivas.length) * 10) / 10 : null,
+        };
+      }),
+    };
+  }
+
+  registrar(datos, usuarioId) {
+    return this.repositorio.registrar(datos, usuarioId);
+  }
+
+  corregir(id, nota, usuarioId) {
+    return this.repositorio.corregir(id, nota, usuarioId);
+  }
+
+  eliminar(id) {
+    return this.repositorio.eliminar(id);
+  }
+}

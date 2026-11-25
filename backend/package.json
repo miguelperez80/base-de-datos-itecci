@@ -9,7 +9,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed:usuarios": "node scripts/seed-usuarios.js",
-    "test": "node --test --test-reporter=spec test/owasp.test.js"
+    "test": "node --test --test-reporter=spec test/owasp.test.js test/calificaciones.test.js"
   },
   "engines": {
     "node": ">=20"

@@ -1784,6 +1784,14 @@ CREATE OR REPLACE PACKAGE BODY pkg_api_catalogo AS
                 OPEN v_cur FOR
                     SELECT id, apellidos || ' ' || nombres || CASE WHEN activo = 0 THEN ' (inactivo)' END AS nombre
                       FROM docente ORDER BY apellidos, nombres;
+            WHEN 'grupos_notas' THEN
+                OPEN v_cur FOR
+                    SELECT g.id, g.codigo || ' · ' || t.nombre || ' · ' || g.estado AS nombre
+                      FROM grupo g
+                      JOIN tecnico t ON t.id = g.tecnico_id
+                      JOIN periodo p ON p.id = g.periodo_id
+                     WHERE g.estado <> 'Cancelado'
+                     ORDER BY p.fecha_inicio DESC, g.codigo;
             WHEN 'grupos_abiertos' THEN
                 OPEN v_cur FOR
                     SELECT g.id, g.codigo || ' · ' || t.nombre || ' (semestre ' || g.semestre || ')' AS nombre
@@ -2181,6 +2189,154 @@ CREATE OR REPLACE PACKAGE BODY pkg_api_contrato AS
             OFFSET NVL(p_offset, 0) ROWS FETCH NEXT NVL(p_limit, 20) ROWS ONLY;
     END listar;
 END pkg_api_contrato;
+/
+
+-- =====================================================================
+-- pkg_api_calificacion : planilla de notas de un grupo y registro, corrección y eliminación de notas.
+-- Reutiliza PKG_CALIFICACION.registrar (escala y prerrequisito RN-04) y los triggers de CALIFICACION
+-- (competencia del grupo, matrícula no retirada, supletorio solo con ordinaria perdida RN-22).
+-- =====================================================================
+CREATE OR REPLACE PACKAGE pkg_api_calificacion AS
+    -- Datos del grupo, competencias del semestre, estudiantes (con crédito y asistencia) y notas registradas
+    PROCEDURE planilla  (p_grupo_id IN NUMBER, p_grupo OUT SYS_REFCURSOR, p_competencias OUT SYS_REFCURSOR,
+                         p_estudiantes OUT SYS_REFCURSOR, p_notas OUT SYS_REFCURSOR);
+    PROCEDURE registrar (p_matricula_id IN NUMBER, p_competencia_id IN NUMBER, p_tipo IN VARCHAR2,
+                         p_nota IN NUMBER, p_usuario_id IN NUMBER, p_id OUT NUMBER);
+    -- Corrige el valor de una nota y deja constancia de quién y cuándo la corrigió
+    PROCEDURE corregir  (p_id IN NUMBER, p_nota IN NUMBER, p_usuario_id IN NUMBER);
+    PROCEDURE eliminar  (p_id IN NUMBER);
+END pkg_api_calificacion;
+/
+CREATE OR REPLACE PACKAGE BODY pkg_api_calificacion AS
+    -- Indica si, con el cambio, la competencia quedaría perdida mientras la siguiente del semestre ya está
+    -- calificada: eso rompería el prerrequisito (RN-04) de una nota que ya existe.
+    FUNCTION rompe_prerrequisito (p_id IN NUMBER, p_nota_nueva IN NUMBER) RETURN BOOLEAN IS
+        v_matricula calificacion.matricula_id%TYPE;
+        v_comp      calificacion.competencia_id%TYPE;
+        v_orden     competencia.orden%TYPE;
+        v_tecnico   competencia.tecnico_id%TYPE;
+        v_estud     matricula.estudiante_id%TYPE;
+        v_ord       NUMBER;
+        v_sup       NUMBER;
+        v_n         NUMBER;
+    BEGIN
+        SELECT k.matricula_id, k.competencia_id, c.orden, c.tecnico_id, m.estudiante_id
+          INTO v_matricula, v_comp, v_orden, v_tecnico, v_estud
+          FROM calificacion k JOIN competencia c ON c.id = k.competencia_id JOIN matricula m ON m.id = k.matricula_id
+         WHERE k.id = p_id;
+        IF MOD(v_orden, 4) = 0 THEN
+            RETURN FALSE;
+        END IF;
+        SELECT MAX(CASE WHEN tipo = 'Ordinaria'  THEN CASE WHEN id = p_id THEN p_nota_nueva ELSE nota END END),
+               MAX(CASE WHEN tipo = 'Supletorio' THEN CASE WHEN id = p_id THEN p_nota_nueva ELSE nota END END)
+          INTO v_ord, v_sup
+          FROM calificacion WHERE matricula_id = v_matricula AND competencia_id = v_comp;
+        IF NVL(v_sup, v_ord) >= pkg_util.c_nota_aprueba THEN
+            RETURN FALSE;
+        END IF;
+        SELECT COUNT(*) INTO v_n
+          FROM calificacion k JOIN matricula m ON m.id = k.matricula_id JOIN competencia c ON c.id = k.competencia_id
+         WHERE m.estudiante_id = v_estud AND c.tecnico_id = v_tecnico AND c.orden = v_orden + 1;
+        RETURN v_n > 0;
+    END rompe_prerrequisito;
+
+    PROCEDURE planilla (p_grupo_id IN NUMBER, p_grupo OUT SYS_REFCURSOR, p_competencias OUT SYS_REFCURSOR,
+                        p_estudiantes OUT SYS_REFCURSOR, p_notas OUT SYS_REFCURSOR) IS
+        v_n NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_n FROM grupo WHERE id = p_grupo_id;
+        IF v_n = 0 THEN
+            RAISE_APPLICATION_ERROR(-20404, 'El grupo no existe');
+        END IF;
+        OPEN p_grupo FOR
+            SELECT g.id, g.codigo, t.nombre AS tecnico, p.codigo AS periodo, g.semestre, g.estado,
+                   d.apellidos || ' ' || d.nombres AS docente
+              FROM grupo g
+              JOIN tecnico t ON t.id = g.tecnico_id
+              JOIN periodo p ON p.id = g.periodo_id
+              JOIN docente d ON d.id = g.docente_id
+             WHERE g.id = p_grupo_id;
+        OPEN p_competencias FOR
+            SELECT c.id, c.orden, c.nombre
+              FROM competencia c JOIN grupo g ON g.tecnico_id = c.tecnico_id AND g.semestre = c.semestre
+             WHERE g.id = p_grupo_id
+             ORDER BY c.orden;
+        OPEN p_estudiantes FOR
+            SELECT m.id AS matricula_id, e.cedula, e.apellidos || ' ' || e.nombres AS estudiante, m.estado,
+                   ec.estado AS credito, v.porcentaje AS asistencia
+              FROM matricula m
+              JOIN estudiante e ON e.id = m.estudiante_id
+              LEFT JOIN v_estado_credito ec ON ec.matricula_id = m.id
+              LEFT JOIN v_asistencia_matricula v ON v.matricula_id = m.id
+             WHERE m.grupo_id = p_grupo_id
+             ORDER BY CASE m.estado WHEN 'Retirada' THEN 1 ELSE 0 END, e.apellidos, e.nombres;
+        OPEN p_notas FOR
+            SELECT k.id, k.matricula_id, k.competencia_id, k.tipo, k.nota,
+                   TO_CHAR(k.fecha, pkg_api_util.c_formato_fecha) AS fecha, u.nombre AS registrado_por
+              FROM calificacion k
+              JOIN matricula m ON m.id = k.matricula_id
+              LEFT JOIN usuario u ON u.id = k.registrado_por
+             WHERE m.grupo_id = p_grupo_id;
+    END planilla;
+
+    PROCEDURE registrar (p_matricula_id IN NUMBER, p_competencia_id IN NUMBER, p_tipo IN VARCHAR2,
+                         p_nota IN NUMBER, p_usuario_id IN NUMBER, p_id OUT NUMBER) IS
+    BEGIN
+        pkg_calificacion.registrar(p_matricula => p_matricula_id, p_competencia => p_competencia_id, p_nota => p_nota,
+                                   p_id => p_id, p_tipo => p_tipo, p_usuario => p_usuario_id);
+    END registrar;
+
+    PROCEDURE corregir (p_id IN NUMBER, p_nota IN NUMBER, p_usuario_id IN NUMBER) IS
+        v_tipo calificacion.tipo%TYPE;
+        v_sup  NUMBER;
+    BEGIN
+        BEGIN
+            SELECT k.tipo, (SELECT COUNT(*) FROM calificacion s
+                             WHERE s.matricula_id = k.matricula_id AND s.competencia_id = k.competencia_id
+                               AND s.tipo = 'Supletorio')
+              INTO v_tipo, v_sup
+              FROM calificacion k WHERE k.id = p_id;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE_APPLICATION_ERROR(-20404, 'La nota no existe');
+        END;
+        IF p_nota IS NULL OR p_nota < 1 OR p_nota > 5 THEN
+            RAISE_APPLICATION_ERROR(-20240, 'La nota debe estar entre 1.0 y 5.0 (RN-20)');
+        END IF;
+        IF v_tipo = 'Ordinaria' AND p_nota >= pkg_util.c_nota_aprueba AND v_sup > 0 THEN
+            RAISE_APPLICATION_ERROR(-20247, 'La competencia tiene supletorio registrado: para aprobar la nota ordinaria, '
+                || 'coordinación debe eliminar primero el supletorio (RN-22)');
+        END IF;
+        IF rompe_prerrequisito(p_id, p_nota) THEN
+            RAISE_APPLICATION_ERROR(-20248, 'No se puede dejar perdida esta competencia: la siguiente ya está calificada (RN-04). '
+                || 'Si el estudiante la perdió, registre el supletorio.');
+        END IF;
+        UPDATE calificacion SET nota = p_nota, fecha = TRUNC(SYSDATE), registrado_por = p_usuario_id WHERE id = p_id;
+    END corregir;
+
+    PROCEDURE eliminar (p_id IN NUMBER) IS
+        v_tipo calificacion.tipo%TYPE;
+        v_sup  NUMBER;
+    BEGIN
+        BEGIN
+            SELECT k.tipo, (SELECT COUNT(*) FROM calificacion s
+                             WHERE s.matricula_id = k.matricula_id AND s.competencia_id = k.competencia_id
+                               AND s.tipo = 'Supletorio')
+              INTO v_tipo, v_sup
+              FROM calificacion k WHERE k.id = p_id;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE_APPLICATION_ERROR(-20404, 'La nota no existe');
+        END;
+        IF v_tipo = 'Ordinaria' AND v_sup > 0 THEN
+            RAISE_APPLICATION_ERROR(-20247, 'Elimine primero el supletorio de esta competencia (RN-22)');
+        END IF;
+        IF rompe_prerrequisito(p_id, NULL) THEN
+            RAISE_APPLICATION_ERROR(-20248, 'No se puede eliminar: la competencia siguiente ya está calificada (RN-04)');
+        END IF;
+        DELETE FROM calificacion WHERE id = p_id;
+    END eliminar;
+END pkg_api_calificacion;
 /
 
 -- =====================================================================

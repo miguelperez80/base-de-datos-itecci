@@ -52,6 +52,11 @@ export function crearRutas(c) {
   api.post('/pagos', validar({ body: v.pagoBody }), c.pagos.registrar);
   api.post('/pagos/:id/anulacion', autorizar(...SOLO_COORDINADOR), validar({ params: v.idParam, body: v.anulacionBody }), c.pagos.anular);
 
+  api.get('/calificaciones/grupos/:id', validar({ params: v.idParam }), c.calificaciones.planilla);
+  api.post('/calificaciones', validar({ body: v.calificacionBody }), c.calificaciones.registrar);
+  api.put('/calificaciones/:id', validar({ params: v.idParam, body: v.correccionNotaBody }), c.calificaciones.corregir);
+  api.delete('/calificaciones/:id', autorizar(...SOLO_COORDINADOR), validar({ params: v.idParam }), c.calificaciones.eliminar);
+
   api.get('/reportes/tablero', c.reportes.tablero);
   api.get('/reportes/cartera', validar({ query: v.listaQuery }), c.reportes.cartera);
 

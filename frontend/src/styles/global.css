@@ -268,3 +268,21 @@ textarea.entrada { min-height: 84px; resize: vertical; }
 .grupo-docente-estado { display: flex; align-items: center; gap: 10px; font-size: 0.8125rem; color: var(--texto-2); }
 .grupo-docente-vacio { padding: 12px 14px; margin: 0; }
 @media (max-width: 640px) { .grupo-docente summary { grid-template-columns: 1fr; } }
+
+.selector-grupo { flex: 1 1 360px; max-width: 560px; }
+.planilla th .planilla-competencia { display: block; max-width: 140px; margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--texto-3); }
+.planilla tr.retirada td { opacity: 0.55; }
+.planilla td { vertical-align: middle; }
+.celda-nota { display: inline-grid; justify-items: end; min-width: 64px; min-height: 40px; padding: 6px 10px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--blanco); font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color 150ms, border-color 150ms; }
+.celda-nota:hover:not(:disabled) { border-color: var(--negro); }
+.celda-nota:focus-visible { outline: 2px solid var(--rojo); outline-offset: 2px; }
+.celda-nota:disabled { cursor: not-allowed; }
+.celda-nota.aprobada { color: var(--ok); background: var(--ok-suave); border-color: #b7dcc5; }
+.celda-nota.perdida { color: var(--rojo-oscuro); background: var(--rojo-suave); border-color: #f3b8c0; }
+.celda-nota-detalle { font-size: 0.6875rem; font-weight: 500; color: var(--texto-3); }
+.texto-mal { color: var(--rojo-oscuro); font-weight: 600; }
+.planilla-leyenda { margin-top: 12px; }
+.nota-bloque { padding: 14px 0; border-top: 1px solid var(--borde); }
+.nota-bloque h3 { margin: 0 0 8px; }
+.nota-fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.nota-entrada { width: 96px; text-align: center; font-size: 1.125rem; font-weight: 700; }

@@ -125,8 +125,19 @@ export const anulacionBody = z.object({ motivo: texto(5, 300) }).strict();
 export const tablaParam = z.object({
   tabla: z.string().trim().toUpperCase().regex(/^[A-Z][A-Z0-9_$#]{0,29}$/, 'Nombre de tabla no válido'),
 });
+const nota = z.preprocess(
+  (v) => (typeof v === 'string' ? v.trim().replace(',', '.') : v),
+  z.coerce.number({ invalid_type_error: 'Escriba una nota como 3.5' })
+    .min(1, 'La nota mínima es 1.0').max(5, 'La nota máxima es 5.0')
+    .refine((n) => Math.abs(n * 10 - Math.round(n * 10)) < 1e-9, 'Use un solo decimal, por ejemplo 3.5'),
+);
+export const calificacionBody = z.object({
+  matricula_id: id, competencia_id: id, tipo: z.enum(['Ordinaria', 'Supletorio']), nota,
+}).strict();
+export const correccionNotaBody = z.object({ nota }).strict();
+
 export const disponibilidadQuery = z.object({ periodo_id: id, grupo_id: id.optional() }).strict();
 
 export const catalogoParam = z.object({
-  nombre: z.enum(['periodos', 'aulas', 'medios_pago', 'tecnicos', 'docentes', 'docentes_todos', 'grupos_abiertos']),
+  nombre: z.enum(['periodos', 'aulas', 'medios_pago', 'tecnicos', 'docentes', 'docentes_todos', 'grupos_abiertos', 'grupos_notas']),
 });

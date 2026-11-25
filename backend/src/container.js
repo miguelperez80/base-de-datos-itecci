@@ -5,11 +5,13 @@ import {
 } from './repositories/entidades.js';
 import {
   UsuarioRepository, CatalogoRepository, MatriculaRepository, PagoRepository, ReporteRepository, DiccionarioRepository,
+  CalificacionRepository,
 } from './repositories/procesos.js';
 import { CrudService } from './services/CrudService.js';
 import { AuthService, TokenService } from './services/AuthService.js';
 import {
   MatriculaService, PagoService, ReporteService, DiccionarioService, DisponibilidadService, CargaDocenteService,
+  CalificacionService,
 } from './services/procesos.js';
 import * as ctl from './controllers/controllers.js';
 import { autenticar } from './middlewares/auth.js';
@@ -36,6 +38,7 @@ export function crearContenedor(conexion = db) {
     disponibilidad: ctl.disponibilidadController(new DisponibilidadService(grupoRepo)),
     matriculas: ctl.matriculaController(new MatriculaService(new MatriculaRepository(conexion))),
     pagos: ctl.pagoController(new PagoService(new PagoRepository(conexion))),
+    calificaciones: ctl.calificacionController(new CalificacionService(new CalificacionRepository(conexion))),
     reportes: ctl.reporteController(new ReporteService(new ReporteRepository(conexion))),
     diccionario: ctl.diccionarioController(new DiccionarioService(diccionarioRepo)),
     salud: async (_req, res) => {

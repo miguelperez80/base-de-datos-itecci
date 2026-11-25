@@ -44,6 +44,25 @@ export function crearBaseSimulada() {
           const usuario = USUARIOS[binds.username];
           return { outBinds: { cur: cursor(usuario ? [usuario] : []) } };
         }
+        if (sql.includes('pkg_api_calificacion.planilla')) {
+          return { outBinds: {
+            grupo: cursor([{ ID: binds.grupo_id, CODIGO: 'SIS-2026B-S2', TECNICO: 'Sistemas', PERIODO: '2026-B', SEMESTRE: 2, ESTADO: 'Activo', DOCENTE: 'Rosero Ana' }]),
+            competencias: cursor([{ ID: 5, ORDEN: 5, NOMBRE: 'Bases de datos' }, { ID: 6, ORDEN: 6, NOMBRE: 'Redes' }]),
+            estudiantes: cursor([
+              { MATRICULA_ID: 100, CEDULA: '1001', ESTUDIANTE: 'Ana', ESTADO: 'Activa', CREDITO: 'Al día', ASISTENCIA: 92.5 },
+              { MATRICULA_ID: 101, CEDULA: '1002', ESTUDIANTE: 'Luis', ESTADO: 'Activa', CREDITO: 'En mora', ASISTENCIA: 70 },
+            ]),
+            notas: cursor([
+              { ID: 1, MATRICULA_ID: 100, COMPETENCIA_ID: 5, TIPO: 'Ordinaria', NOTA: 4.5, FECHA: '2026-10-01', REGISTRADO_POR: 'Secretaría' },
+              { ID: 2, MATRICULA_ID: 100, COMPETENCIA_ID: 6, TIPO: 'Ordinaria', NOTA: 3.5, FECHA: '2026-10-20', REGISTRADO_POR: 'Secretaría' },
+              { ID: 3, MATRICULA_ID: 101, COMPETENCIA_ID: 5, TIPO: 'Ordinaria', NOTA: 2.0, FECHA: '2026-10-01', REGISTRADO_POR: 'Secretaría' },
+              { ID: 4, MATRICULA_ID: 101, COMPETENCIA_ID: 5, TIPO: 'Supletorio', NOTA: 3.2, FECHA: '2026-10-10', REGISTRADO_POR: 'Coordinación' },
+            ]),
+          } };
+        }
+        if (sql.includes('pkg_api_calificacion.registrar') && binds.tipo === 'Supletorio' && binds.matricula_id === 100) {
+          throw errorOracle(20125, 'Supletorio no permitido: la competencia no tiene nota ordinaria perdida (RN-22)');
+        }
         if (sql.includes('pkg_api_pago.registrar')) {
           throw errorOracle(20010, 'El pago (900000) supera el saldo pendiente (100000)');
         }

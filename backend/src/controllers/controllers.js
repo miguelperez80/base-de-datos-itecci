@@ -78,3 +78,17 @@ export const disponibilidadController = (servicio) => ({
 export const cargaDocenteController = (servicio) => ({
   consultar: async (req, res) => res.json(await servicio.consultar(req.valid.params.id)),
 });
+
+/** Controlador de la planilla de notas y del registro, corrección y eliminación de notas. */
+export const calificacionController = (servicio) => ({
+  planilla: async (req, res) => res.json(await servicio.planilla(req.valid.params.id)),
+  registrar: async (req, res) => res.status(201).json({ id: await servicio.registrar(req.valid.body, req.usuario.id) }),
+  corregir: async (req, res) => {
+    await servicio.corregir(req.valid.params.id, req.valid.body.nota, req.usuario.id);
+    res.status(204).end();
+  },
+  eliminar: async (req, res) => {
+    await servicio.eliminar(req.valid.params.id);
+    res.status(204).end();
+  },
+});
