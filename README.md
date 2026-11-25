@@ -155,6 +155,8 @@ Antes de `REPORTES.sql` y `PRUEBAS.sql` active la salida: `SET SERVEROUTPUT ON` 
 | Restricción de acceso a funcionalidades | Por rol, en `routes/index.js` (servidor) y en el menú y los botones (interfaz) |
 | Controles de presentación de CRUD | Estudiantes, Docentes, Contratos docentes, Programas y Grupos (`components/CrudPage.jsx`) |
 | Procedimientos almacenados de Oracle | Toda operación pasa por un paquete PL/SQL; el backend no contiene sentencias SQL sobre tablas |
+| Programación de grupos | Al crear o editar un grupo se listan solo los docentes con contrato en el periodo y se muestra la ocupación por día de docentes y aulas (`PKG_API_GRUPO.disponibilidad`) |
+| Carga de los docentes | En Docentes, los estudiantes actuales y los días que dicta cada uno; el detalle muestra sus grupos con horario, aula y estudiantes (`PKG_API_DOCENTE.carga`) |
 | Manejo del diccionario de datos | Pantalla "Diccionario de datos" → `PKG_API_DICCIONARIO` (`USER_TABLES`, `USER_TAB_COLUMNS`, `USER_OBJECTS`, `USER_PROCEDURES`…) |
 
 ## Seguridad (OWASP Top 10)

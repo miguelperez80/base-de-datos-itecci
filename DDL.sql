@@ -1945,6 +1945,10 @@ CREATE OR REPLACE PACKAGE pkg_api_docente AS
     FUNCTION  obtener  (p_id IN NUMBER) RETURN SYS_REFCURSOR;
     PROCEDURE listar   (p_busqueda IN VARCHAR2, p_offset IN NUMBER, p_limit IN NUMBER,
                         p_total OUT NUMBER, p_cursor OUT SYS_REFCURSOR);
+    -- Días de la semana en que el docente dicta clase en sus grupos en formación o activos (p. ej. "Lun, Mié, Vie")
+    FUNCTION  dias_activos (p_id IN NUMBER) RETURN VARCHAR2;
+    -- Grupos del docente con sus días de clase y los estudiantes matriculados en cada uno
+    PROCEDURE carga    (p_id IN NUMBER, p_grupos OUT SYS_REFCURSOR, p_estudiantes OUT SYS_REFCURSOR);
 END pkg_api_docente;
 /
 CREATE OR REPLACE PACKAGE BODY pkg_api_docente AS
@@ -2005,12 +2009,61 @@ CREATE OR REPLACE PACKAGE BODY pkg_api_docente AS
         OPEN p_cursor FOR
             SELECT d.id, d.cedula, d.nombres, d.apellidos, d.email, d.telefono, d.nivel_formacion,
                    d.anios_experiencia_docencia AS anios_experiencia, d.activo,
-                   (SELECT COUNT(*) FROM grupo g WHERE g.docente_id = d.id) AS grupos
+                   (SELECT COUNT(*) FROM grupo g WHERE g.docente_id = d.id) AS grupos,
+                   (SELECT COUNT(*) FROM matricula m JOIN grupo g ON g.id = m.grupo_id
+                     WHERE g.docente_id = d.id AND g.estado IN ('En formación', 'Activo')
+                       AND m.estado <> 'Retirada') AS estudiantes,
+                   dias_activos(d.id) AS dias
               FROM docente d
              WHERE v_b IS NULL OR UPPER(d.apellidos || ' ' || d.nombres) LIKE '%' || v_b || '%' OR d.cedula LIKE v_b || '%'
              ORDER BY d.apellidos, d.nombres
             OFFSET NVL(p_offset, 0) ROWS FETCH NEXT NVL(p_limit, 20) ROWS ONLY;
     END listar;
+
+    FUNCTION dias_activos (p_id IN NUMBER) RETURN VARCHAR2 IS
+        v_dias VARCHAR2(60);
+    BEGIN
+        FOR r IN (SELECT DISTINCT h.dia_semana
+                    FROM grupo g JOIN horario_grupo h ON h.grupo_id = g.id
+                   WHERE g.docente_id = p_id AND g.estado IN ('En formación', 'Activo')
+                   ORDER BY h.dia_semana) LOOP
+            v_dias := v_dias || CASE WHEN v_dias IS NOT NULL THEN ', ' END
+                   || CASE r.dia_semana WHEN 1 THEN 'Lun' WHEN 2 THEN 'Mar' WHEN 3 THEN 'Mié'
+                                        WHEN 4 THEN 'Jue' WHEN 5 THEN 'Vie' WHEN 6 THEN 'Sáb' END;
+        END LOOP;
+        RETURN v_dias;
+    END dias_activos;
+
+    PROCEDURE carga (p_id IN NUMBER, p_grupos OUT SYS_REFCURSOR, p_estudiantes OUT SYS_REFCURSOR) IS
+        v_n NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_n FROM docente WHERE id = p_id;
+        IF v_n = 0 THEN
+            RAISE_APPLICATION_ERROR(-20404, 'El docente no existe');
+        END IF;
+        OPEN p_grupos FOR
+            SELECT g.id, g.codigo, t.nombre AS tecnico, p.codigo AS periodo, g.semestre, a.nombre AS aula, g.estado,
+                   (SELECT LISTAGG(DECODE(h.dia_semana, 1, 'Lunes', 2, 'Martes', 3, 'Miércoles', 4, 'Jueves',
+                                          5, 'Viernes', 6, 'Sábado'), ' y ') WITHIN GROUP (ORDER BY h.dia_semana)
+                      FROM horario_grupo h WHERE h.grupo_id = g.id) AS dias,
+                   (SELECT MIN(h.hora_inicio) || ' - ' || MIN(h.hora_fin) FROM horario_grupo h WHERE h.grupo_id = g.id) AS horario,
+                   (SELECT COUNT(*) FROM matricula m WHERE m.grupo_id = g.id AND m.estado <> 'Retirada') AS matriculados
+              FROM grupo g
+              JOIN tecnico t ON t.id = g.tecnico_id
+              JOIN periodo p ON p.id = g.periodo_id
+              JOIN aula a    ON a.id = g.aula_id
+             WHERE g.docente_id = p_id
+             ORDER BY p.fecha_inicio DESC, g.codigo;
+        OPEN p_estudiantes FOR
+            SELECT m.id, m.grupo_id, e.cedula, e.apellidos || ' ' || e.nombres AS estudiante, e.telefono,
+                   m.estado, v.porcentaje AS asistencia
+              FROM matricula m
+              JOIN grupo g      ON g.id = m.grupo_id
+              JOIN estudiante e ON e.id = m.estudiante_id
+              LEFT JOIN v_asistencia_matricula v ON v.matricula_id = m.id
+             WHERE g.docente_id = p_id
+             ORDER BY m.grupo_id, CASE m.estado WHEN 'Retirada' THEN 1 ELSE 0 END, e.apellidos, e.nombres;
+    END carga;
 END pkg_api_docente;
 /
 
@@ -2209,6 +2262,10 @@ CREATE OR REPLACE PACKAGE pkg_api_grupo AS
     FUNCTION  obtener  (p_id IN NUMBER) RETURN SYS_REFCURSOR;
     PROCEDURE listar   (p_busqueda IN VARCHAR2, p_offset IN NUMBER, p_limit IN NUMBER,
                         p_total OUT NUMBER, p_cursor OUT SYS_REFCURSOR);
+    -- Docentes con contrato y aulas del periodo, con los días que ya tienen ocupados (formato "dia:grupo,...").
+    -- p_grupo_id excluye de la ocupación al grupo que se está editando.
+    PROCEDURE disponibilidad (p_periodo_id IN NUMBER, p_grupo_id IN NUMBER,
+                              p_docentes OUT SYS_REFCURSOR, p_aulas OUT SYS_REFCURSOR);
 END pkg_api_grupo;
 /
 CREATE OR REPLACE PACKAGE BODY pkg_api_grupo AS
@@ -2346,6 +2403,34 @@ CREATE OR REPLACE PACKAGE BODY pkg_api_grupo AS
              ORDER BY p.anio DESC, p.calendario DESC, g.codigo
             OFFSET NVL(p_offset, 0) ROWS FETCH NEXT NVL(p_limit, 20) ROWS ONLY;
     END listar;
+
+    PROCEDURE disponibilidad (p_periodo_id IN NUMBER, p_grupo_id IN NUMBER,
+                              p_docentes OUT SYS_REFCURSOR, p_aulas OUT SYS_REFCURSOR) IS
+        v_n NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_n FROM periodo WHERE id = p_periodo_id;
+        IF v_n = 0 THEN
+            RAISE_APPLICATION_ERROR(-20404, 'El periodo no existe');
+        END IF;
+        OPEN p_docentes FOR
+            SELECT d.id, d.apellidos || ' ' || d.nombres AS nombre, c.horas_catedra,
+                   (SELECT LISTAGG(h.dia_semana || ':' || g.codigo, ',') WITHIN GROUP (ORDER BY h.dia_semana)
+                      FROM grupo g JOIN horario_grupo h ON h.grupo_id = g.id
+                     WHERE g.docente_id = d.id AND g.periodo_id = p_periodo_id AND g.estado <> 'Cancelado'
+                       AND g.id <> NVL(p_grupo_id, -1)) AS ocupacion
+              FROM docente d
+              JOIN contrato_docente c ON c.docente_id = d.id AND c.periodo_id = p_periodo_id
+             WHERE d.activo = 1 OR d.id = (SELECT docente_id FROM grupo WHERE id = p_grupo_id)
+             ORDER BY d.apellidos, d.nombres;
+        OPEN p_aulas FOR
+            SELECT a.id, a.nombre, a.capacidad,
+                   (SELECT LISTAGG(h.dia_semana || ':' || g.codigo, ',') WITHIN GROUP (ORDER BY h.dia_semana)
+                      FROM grupo g JOIN horario_grupo h ON h.grupo_id = g.id
+                     WHERE g.aula_id = a.id AND g.periodo_id = p_periodo_id AND g.estado <> 'Cancelado'
+                       AND g.id <> NVL(p_grupo_id, -1)) AS ocupacion
+              FROM aula a
+             ORDER BY a.nombre;
+    END disponibilidad;
 END pkg_api_grupo;
 /
 

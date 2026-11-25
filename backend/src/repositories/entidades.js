@@ -1,4 +1,5 @@
 import { CrudRepository } from './CrudRepository.js';
+import { salida } from './OracleRepository.js';
 
 /** Estudiantes (pkg_api_estudiante). */
 export class EstudianteRepository extends CrudRepository {
@@ -21,6 +22,15 @@ export class DocenteRepository extends CrudRepository {
       paquete: 'pkg_api_docente',
       camposCrear: ['cedula', 'nombres', 'apellidos', 'email', 'telefono', 'nivel_formacion', 'anios_experiencia', 'activo'],
     });
+  }
+
+  /** Grupos del docente y estudiantes matriculados en ellos. */
+  async carga(id) {
+    const { grupos, estudiantes } = await this.llamar(
+      'BEGIN pkg_api_docente.carga(:id, :grupos, :estudiantes); END;',
+      { id, grupos: salida.cursor(), estudiantes: salida.cursor() },
+    );
+    return { grupos, estudiantes };
   }
 }
 
@@ -51,5 +61,14 @@ export class GrupoRepository extends CrudRepository {
       camposCrear: ['tecnico_id', 'periodo_id', 'semestre', ...editables],
       camposEditar: editables,
     });
+  }
+
+  /** Docentes con contrato y aulas de un periodo, con su ocupación por día. */
+  async disponibilidad(periodoId, grupoId) {
+    const { docentes, aulas } = await this.llamar(
+      'BEGIN pkg_api_grupo.disponibilidad(:periodo_id, :grupo_id, :docentes, :aulas); END;',
+      { periodo_id: periodoId, grupo_id: grupoId ?? null, docentes: salida.cursor(), aulas: salida.cursor() },
+    );
+    return { docentes, aulas };
   }
 }

@@ -92,3 +92,33 @@ export class DiccionarioService {
     return this.diccionario.subprogramas();
   }
 }
+
+const aOcupacion = (texto) => (texto ? texto.split(',').map((par) => {
+  const [dia, grupo] = par.split(':');
+  return { dia: Number(dia), grupo };
+}) : []);
+
+/** Disponibilidad de docentes y aulas de un periodo para programar un grupo. */
+export class DisponibilidadService {
+  constructor(grupoRepository) {
+    this.repositorio = grupoRepository;
+  }
+
+  async consultar({ periodo_id: periodoId, grupo_id: grupoId }) {
+    const { docentes, aulas } = await this.repositorio.disponibilidad(periodoId, grupoId);
+    const conOcupacion = ({ ocupacion, ...fila }) => ({ ...fila, ocupacion: aOcupacion(ocupacion) });
+    return { docentes: docentes.map(conOcupacion), aulas: aulas.map(conOcupacion) };
+  }
+}
+
+/** Grupos de un docente con sus días de clase y sus estudiantes. */
+export class CargaDocenteService {
+  constructor(docenteRepository) {
+    this.repositorio = docenteRepository;
+  }
+
+  async consultar(id) {
+    const { grupos, estudiantes } = await this.repositorio.carga(id);
+    return grupos.map((g) => ({ ...g, estudiantes: estudiantes.filter((e) => e.grupo_id === g.id) }));
+  }
+}

@@ -68,3 +68,13 @@ export const diccionarioController = (servicio) => ({
   objetos: async (_req, res) => res.json(await servicio.objetos()),
   subprogramas: async (_req, res) => res.json(await servicio.subprogramas()),
 });
+
+/** Controlador de la disponibilidad de docentes y aulas para programar grupos. */
+export const disponibilidadController = (servicio) => ({
+  consultar: async (req, res) => res.json(await servicio.consultar(req.valid.query)),
+});
+
+/** Controlador de los grupos y estudiantes de cada docente. */
+export const cargaDocenteController = (servicio) => ({
+  consultar: async (req, res) => res.json(await servicio.consultar(req.valid.params.id)),
+});

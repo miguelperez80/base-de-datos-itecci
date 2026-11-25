@@ -1,4 +1,8 @@
+import { useState } from 'react';
+import { CalendarDays } from 'lucide-react';
 import CrudPage from '../components/CrudPage.jsx';
+import CargaDocente from '../components/CargaDocente.jsx';
+import DisponibilidadGrupo from '../components/DisponibilidadGrupo.jsx';
 import { Insignia } from '../components/Tabla.jsx';
 import { ROLES } from '../context/AuthContext.jsx';
 import { hoyIso, moneda, numero, programaCorto } from '../utils/formato.js';
@@ -69,36 +73,52 @@ export function Estudiantes() {
 
 /** CRUD de docentes. */
 export function Docentes() {
+  const [detalle, setDetalle] = useState(null);
   return (
-    <CrudPage
-      titulo="Docentes"
-      descripcion="Docentes contratados por hora cátedra. Un docente con grupos no se elimina: se marca como inactivo."
-      recurso="docentes"
-      singular="Docente"
-      escriben={SOLO_COORDINADOR}
-      textoBuscar="Buscar por nombre o documento…"
-      describir={(f) => `${f.nombres} ${f.apellidos}`}
-      columnas={[
-        { clave: 'cedula', titulo: 'Documento', render: (f) => <span className="num">{f.cedula}</span> },
-        { clave: 'apellidos', titulo: 'Docente', render: (f) => <strong>{f.apellidos} {f.nombres}</strong> },
-        { clave: 'email', titulo: 'Correo', render: (f) => <span className="secundario">{f.email}</span> },
-        { clave: 'nivel_formacion', titulo: 'Formación' },
-        { clave: 'anios_experiencia', titulo: 'Años de experiencia', derecha: true },
-        { clave: 'grupos', titulo: 'Grupos', derecha: true },
-        { clave: 'activo', titulo: 'Estado', render: (f) => siNo(f.activo) },
-      ]}
-      inicial={{ cedula: '', nombres: '', apellidos: '', email: '', telefono: '', nivel_formacion: '', anios_experiencia: '', activo: 1 }}
-      campos={[
-        { nombre: 'cedula', etiqueta: 'Número de documento', requerido: true, ...DOCUMENTO },
-        { nombre: 'nivel_formacion', etiqueta: 'Nivel de formación', tipo: 'select', requerido: true, opciones: opciones(['Pregrado', 'Especialización', 'Maestría', 'Doctorado']) },
-        { nombre: 'nombres', etiqueta: 'Nombres', requerido: true, ...NOMBRE },
-        { nombre: 'apellidos', etiqueta: 'Apellidos', requerido: true, ...NOMBRE },
-        { nombre: 'email', etiqueta: 'Correo electrónico', requerido: true, ...CORREO },
-        { nombre: 'telefono', etiqueta: 'Teléfono (opcional)', ...TELEFONO },
-        { nombre: 'anios_experiencia', etiqueta: 'Años de experiencia en docencia', tipo: 'number', requerido: true, min: 1, max: 60, mensaje: 'Se exige al menos 1 año de experiencia' },
-        { nombre: 'activo', etiqueta: 'Docente activo', tipo: 'checkbox' },
-      ]}
-    />
+    <>
+      <CrudPage
+        titulo="Docentes"
+        descripcion="Docentes contratados por hora cátedra. Un docente con grupos no se elimina: se marca como inactivo."
+        recurso="docentes"
+        singular="Docente"
+        escriben={SOLO_COORDINADOR}
+        textoBuscar="Buscar por nombre o documento…"
+        describir={(f) => `${f.nombres} ${f.apellidos}`}
+        columnas={[
+          { clave: 'cedula', titulo: 'Documento', render: (f) => <span className="num">{f.cedula}</span> },
+          { clave: 'apellidos', titulo: 'Docente', render: (f) => <strong>{f.apellidos} {f.nombres}</strong> },
+          { clave: 'email', titulo: 'Correo', render: (f) => <span className="secundario">{f.email}</span> },
+          { clave: 'nivel_formacion', titulo: 'Formación' },
+          { clave: 'anios_experiencia', titulo: 'Años de experiencia', derecha: true },
+          { clave: 'estudiantes', titulo: 'Estudiantes actuales', derecha: true },
+          { clave: 'dias', titulo: 'Días que dicta', render: (f) => f.dias ?? <span className="secundario">Sin grupos en curso</span> },
+          { clave: 'activo', titulo: 'Estado', render: (f) => siNo(f.activo) },
+        ]}
+        accionesExtra={(f) => (
+          <button
+            type="button"
+            className="btn btn-icono"
+            onClick={() => setDetalle(f)}
+            aria-label={`Ver grupos y estudiantes de ${f.nombres} ${f.apellidos}`}
+            title="Grupos y estudiantes"
+          >
+            <CalendarDays aria-hidden="true" />
+          </button>
+        )}
+        inicial={{ cedula: '', nombres: '', apellidos: '', email: '', telefono: '', nivel_formacion: '', anios_experiencia: '', activo: 1 }}
+        campos={[
+          { nombre: 'cedula', etiqueta: 'Número de documento', requerido: true, ...DOCUMENTO },
+          { nombre: 'nivel_formacion', etiqueta: 'Nivel de formación', tipo: 'select', requerido: true, opciones: opciones(['Pregrado', 'Especialización', 'Maestría', 'Doctorado']) },
+          { nombre: 'nombres', etiqueta: 'Nombres', requerido: true, ...NOMBRE },
+          { nombre: 'apellidos', etiqueta: 'Apellidos', requerido: true, ...NOMBRE },
+          { nombre: 'email', etiqueta: 'Correo electrónico', requerido: true, ...CORREO },
+          { nombre: 'telefono', etiqueta: 'Teléfono (opcional)', ...TELEFONO },
+          { nombre: 'anios_experiencia', etiqueta: 'Años de experiencia en docencia', tipo: 'number', requerido: true, min: 1, max: 60, mensaje: 'Se exige al menos 1 año de experiencia' },
+          { nombre: 'activo', etiqueta: 'Docente activo', tipo: 'checkbox' },
+        ]}
+      />
+      {detalle && <CargaDocente docente={detalle} onCerrar={() => setDetalle(null)} />}
+    </>
   );
 }
 
@@ -180,6 +200,9 @@ export function Grupos() {
       escriben={SOLO_COORDINADOR}
       textoBuscar="Buscar por código, programa o docente…"
       describir={(f) => f.codigo}
+      complemento={DisponibilidadGrupo}
+      complementoTras="dia2"
+      tamanoFormulario="amplio"
       columnas={[
         { clave: 'codigo', titulo: 'Grupo', render: (f) => <strong>{f.codigo}</strong> },
         { clave: 'tecnico', titulo: 'Programa', render: (f) => programaCorto(f.tecnico) },
@@ -194,7 +217,8 @@ export function Grupos() {
         { nombre: 'tecnico_id', etiqueta: 'Programa técnico', tipo: 'select', numerico: true, catalogo: 'tecnicos', requerido: true, soloCrear: true, ancho: true },
         { nombre: 'periodo_id', etiqueta: 'Periodo', tipo: 'select', numerico: true, catalogo: 'periodos', requerido: true, soloCrear: true },
         { nombre: 'semestre', etiqueta: 'Semestre', tipo: 'select', numerico: true, requerido: true, soloCrear: true, opciones: [{ valor: 1, texto: 'I semestre' }, { valor: 2, texto: 'II semestre' }] },
-        { nombre: 'docente_id', etiqueta: 'Docente', tipo: 'select', numerico: true, catalogo: 'docentes', requerido: true, seccion: 'Asignación' },
+        { nombre: 'docente_id', etiqueta: 'Docente', tipo: 'select', numerico: true, requerido: true, seccion: 'Asignación',
+          ayuda: 'Solo aparecen los docentes con contrato en el periodo' },
         { nombre: 'aula_id', etiqueta: 'Aula', tipo: 'select', numerico: true, catalogo: 'aulas', requerido: true },
         { nombre: 'dia1', etiqueta: 'Primer día de clase', tipo: 'select', numerico: true, requerido: true, opciones: DIAS },
         { nombre: 'dia2', etiqueta: 'Segundo día de clase', tipo: 'select', numerico: true, requerido: true, opciones: DIAS },

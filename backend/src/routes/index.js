@@ -34,11 +34,13 @@ export function crearRutas(c) {
   api.get('/catalogos/:nombre', validar({ params: v.catalogoParam }), c.catalogos.listar);
 
   api.use('/estudiantes', rutasCrud(c.estudiantes, { crear: v.estudianteBody, escriben: TODOS }));
+  api.get('/docentes/:id/carga', autorizar(...SOLO_COORDINADOR), validar({ params: v.idParam }), c.cargaDocente.consultar);
   api.use('/docentes', rutasCrud(c.docentes, { crear: v.docenteBody, leen: SOLO_COORDINADOR, escriben: SOLO_COORDINADOR }));
   api.use('/contratos', rutasCrud(c.contratos, {
     crear: v.contratoCrearBody, editar: v.contratoEditarBody, leen: SOLO_COORDINADOR, escriben: SOLO_COORDINADOR,
   }));
   api.use('/tecnicos', rutasCrud(c.tecnicos, { crear: v.tecnicoBody, escriben: SOLO_COORDINADOR }));
+  api.get('/grupos/disponibilidad', autorizar(...SOLO_COORDINADOR), validar({ query: v.disponibilidadQuery }), c.disponibilidad.consultar);
   api.use('/grupos', rutasCrud(c.grupos, { crear: v.grupoCrearBody, editar: v.grupoEditarBody, escriben: SOLO_COORDINADOR }));
 
   api.get('/matriculas', validar({ query: v.listaQuery }), c.matriculas.listar);

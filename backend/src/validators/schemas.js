@@ -125,6 +125,8 @@ export const anulacionBody = z.object({ motivo: texto(5, 300) }).strict();
 export const tablaParam = z.object({
   tabla: z.string().trim().toUpperCase().regex(/^[A-Z][A-Z0-9_$#]{0,29}$/, 'Nombre de tabla no válido'),
 });
+export const disponibilidadQuery = z.object({ periodo_id: id, grupo_id: id.optional() }).strict();
+
 export const catalogoParam = z.object({
   nombre: z.enum(['periodos', 'aulas', 'medios_pago', 'tecnicos', 'docentes', 'docentes_todos', 'grupos_abiertos']),
 });

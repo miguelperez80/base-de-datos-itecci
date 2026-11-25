@@ -8,7 +8,9 @@ import {
 } from './repositories/procesos.js';
 import { CrudService } from './services/CrudService.js';
 import { AuthService, TokenService } from './services/AuthService.js';
-import { MatriculaService, PagoService, ReporteService, DiccionarioService } from './services/procesos.js';
+import {
+  MatriculaService, PagoService, ReporteService, DiccionarioService, DisponibilidadService, CargaDocenteService,
+} from './services/procesos.js';
 import * as ctl from './controllers/controllers.js';
 import { autenticar } from './middlewares/auth.js';
 
@@ -16,6 +18,8 @@ import { autenticar } from './middlewares/auth.js';
 export function crearContenedor(conexion = db) {
   const tokens = new TokenService({ secreto: env.JWT_SECRET, minutos: env.JWT_EXPIRES_MIN });
   const diccionarioRepo = new DiccionarioRepository(conexion);
+  const docenteRepo = new DocenteRepository(conexion);
+  const grupoRepo = new GrupoRepository(conexion);
 
   return {
     autenticar: autenticar(tokens),
@@ -24,10 +28,12 @@ export function crearContenedor(conexion = db) {
     }),
     catalogos: ctl.catalogoController(new CatalogoRepository(conexion)),
     estudiantes: ctl.crudController(new CrudService(new EstudianteRepository(conexion), 'El estudiante')),
-    docentes: ctl.crudController(new CrudService(new DocenteRepository(conexion), 'El docente')),
+    docentes: ctl.crudController(new CrudService(docenteRepo, 'El docente')),
+    cargaDocente: ctl.cargaDocenteController(new CargaDocenteService(docenteRepo)),
     contratos: ctl.crudController(new CrudService(new ContratoRepository(conexion), 'El contrato')),
     tecnicos: ctl.crudController(new CrudService(new TecnicoRepository(conexion), 'El programa técnico')),
-    grupos: ctl.crudController(new CrudService(new GrupoRepository(conexion), 'El grupo')),
+    grupos: ctl.crudController(new CrudService(grupoRepo, 'El grupo')),
+    disponibilidad: ctl.disponibilidadController(new DisponibilidadService(grupoRepo)),
     matriculas: ctl.matriculaController(new MatriculaService(new MatriculaRepository(conexion))),
     pagos: ctl.pagoController(new PagoService(new PagoRepository(conexion))),
     reportes: ctl.reporteController(new ReporteService(new ReporteRepository(conexion))),

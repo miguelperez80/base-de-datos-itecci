@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import { CircleAlert } from 'lucide-react';
 import { ApiError } from '../api/http.js';
 
@@ -98,17 +98,35 @@ export function Campo({ campo, valor, error, alCambiar, opciones, deshabilitado 
   );
 }
 
-/** Formulario generado a partir de la definición de sus campos. */
-export default function Formulario({ campos, inicial, catalogos = {}, editando, textoGuardar = 'Guardar', alGuardar, alCancelar }) {
+/**
+ * Formulario generado a partir de la definición de sus campos.
+ * Complemento: componente opcional que se muestra después del campo complementoTras; recibe los valores,
+ * puede cambiarlos y puede reemplazar las opciones de una lista con fijarOpciones(campo, opciones).
+ */
+export default function Formulario({
+  campos, inicial, catalogos = {}, editando, textoGuardar = 'Guardar', alGuardar, alCancelar,
+  Complemento, complementoTras, idRegistro,
+}) {
   const [valores, setValores] = useState(inicial);
+  const [opcionesFijadas, setOpcionesFijadas] = useState({});
   const [errores, setErrores] = useState({});
   const [general, setGeneral] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
   const cambiar = (nombre, valor) => {
     setValores((v) => ({ ...v, [nombre]: valor }));
-    if (errores[nombre]) setErrores((e) => ({ ...e, [nombre]: undefined }));
+    setErrores((e) => (e[nombre] ? { ...e, [nombre]: undefined } : e));
   };
+
+  const fijarOpciones = useCallback((nombre, opciones) => {
+    setOpcionesFijadas((o) => ({ ...o, [nombre]: opciones }));
+  }, []);
+
+  const complemento = Complemento && (
+    <div className="campo ancho">
+      <Complemento valores={valores} cambiar={cambiar} fijarOpciones={fijarOpciones} idRegistro={idRegistro} />
+    </div>
+  );
 
   const enviar = async (e) => {
     e.preventDefault();
@@ -147,11 +165,13 @@ export default function Formulario({ campos, inicial, catalogos = {}, editando, 
                 valor={valores[c.nombre]}
                 error={errores[c.nombre]}
                 alCambiar={cambiar}
-                opciones={c.catalogo ? catalogos[c.catalogo] : c.opciones}
+                opciones={opcionesFijadas[c.nombre] ?? (c.catalogo ? catalogos[c.catalogo] : c.opciones)}
                 deshabilitado={enviando || (editando && c.soloCrear)}
               />
+              {c.nombre === complementoTras && complemento}
             </FragmentoCampo>
           ))}
+          {!complementoTras && complemento}
         </div>
       </div>
       <div className="modal-pie">

@@ -12,6 +12,7 @@ import Modal, { Confirmacion } from './Modal.jsx';
 export default function CrudPage({
   titulo, descripcion, recurso, singular, columnas, campos, inicial,
   escriben, eliminan = ['COORDINADOR'], describir = (f) => f.nombre, textoBuscar,
+  accionesExtra, complemento, complementoTras, tamanoFormulario,
 }) {
   const { tieneRol } = useAuth();
   const avisos = useAvisos();
@@ -64,8 +65,9 @@ export default function CrudPage({
     }
   };
 
-  const acciones = (puedeEscribir || puedeEliminar) ? (fila) => (
+  const acciones = (accionesExtra || puedeEscribir || puedeEliminar) ? (fila) => (
     <>
+      {accionesExtra?.(fila)}
       {puedeEscribir && (
         <button type="button" className="btn btn-icono" onClick={() => abrirEdicion(fila)} aria-label={`Editar ${describir(fila)}`} title="Editar">
           <Pencil aria-hidden="true" />
@@ -98,7 +100,7 @@ export default function CrudPage({
       </section>
 
       {formulario && (
-        <Modal titulo={`${formulario.id ? 'Editar' : 'Nuevo'} ${singular.toLowerCase()}`} onCerrar={() => setFormulario(null)}>
+        <Modal titulo={`${formulario.id ? 'Editar' : 'Nuevo'} ${singular.toLowerCase()}`} tamano={tamanoFormulario} onCerrar={() => setFormulario(null)}>
           <Formulario
             campos={campos}
             inicial={formulario.valores}
@@ -106,6 +108,9 @@ export default function CrudPage({
             editando={!!formulario.id}
             alGuardar={guardar}
             alCancelar={() => setFormulario(null)}
+            Complemento={complemento}
+            complementoTras={complementoTras}
+            idRegistro={formulario.id}
           />
         </Modal>
       )}
